@@ -16,9 +16,15 @@ namespace JinYanMaoYing
         public Sprite[] runFrames;
         public Sprite crouchSprite;
         public Text statusText;
+        public Image hudFrame;
         public Text hintText;
         public GameObject resultPanel;
         public Text resultText;
+        public Image rankImage;
+        public Text scoreText;
+        public Sprite rankExcellent;
+        public Sprite rankFirst;
+        public Sprite rankSecond;
         public GameObject settingsPanel;
         public RectTransform missionPrompt;
         public GameObject videoOverlay;
@@ -34,6 +40,7 @@ namespace JinYanMaoYing
         private const float CatX = -600f;
         private readonly List<SpawnedItem> items = new List<SpawnedItem>();
         private RenderTexture videoTexture;
+        private Sprite slicedHudSprite;
         private float verticalSpeed, jumpHeight, nextSpawn, elapsed, runFrameTime;
         private int jumpsUsed, coins, beasts, spawnCount;
         private int health = 3;
@@ -45,15 +52,27 @@ namespace JinYanMaoYing
             public RectTransform rect;
             public int kind; // 0 金币，1 脊兽，2 障碍
             public int beastIndex;
+            public float baseY;
+            public float phase;
         }
 
         private void Start()
         {
             Time.timeScale = 1f;
             if (resultPanel != null) resultPanel.SetActive(false);
+            if (rankImage != null) rankImage.gameObject.SetActive(false);
+            if (scoreText != null) scoreText.gameObject.SetActive(false);
             if (settingsPanel != null) settingsPanel.SetActive(false);
             if (missionPrompt != null) missionPrompt.gameObject.SetActive(false);
             nextSpawn = 1.25f;
+            if (hudFrame != null && hudFrame.sprite != null)
+            {
+                Sprite source = hudFrame.sprite;
+                slicedHudSprite = Sprite.Create(source.texture, source.rect, new Vector2(0.5f, 0.5f),
+                    source.pixelsPerUnit, 0, SpriteMeshType.FullRect, new Vector4(170f, 65f, 170f, 65f));
+                hudFrame.sprite = slicedHudSprite;
+                hudFrame.type = Image.Type.Sliced;
+            }
             RefreshStatus();
             if (introClip == null || introPlayer == null || videoScreen == null)
             {
@@ -166,7 +185,9 @@ namespace JinYanMaoYing
             for (int i = items.Count - 1; i >= 0; i--)
             {
                 SpawnedItem item = items[i];
-                item.rect.anchoredPosition += Vector2.left * 560f * dt;
+                Vector2 position = item.rect.anchoredPosition + Vector2.left * 560f * dt;
+                if (item.kind == 1) position.y = item.baseY + Mathf.Sin(elapsed * 3.4f + item.phase) * 16f;
+                item.rect.anchoredPosition = position;
                 float dx = Mathf.Abs(item.rect.anchoredPosition.x - CatX);
                 float dy = Mathf.Abs(item.rect.anchoredPosition.y - cat.anchoredPosition.y);
                 float catHeight = ducking ? 95f : cat.sizeDelta.y;
@@ -179,8 +200,8 @@ namespace JinYanMaoYing
                     Destroy(item.rect.gameObject);
                     items.RemoveAt(i);
                     RefreshStatus();
-                    if (beasts >= 3) Finish(true);
-                    else if (health <= 0) Finish(false);
+                    if (beasts >= 3) { Finish(true); break; }
+                    if (health <= 0) { Finish(false); break; }
                 }
                 else if (item.rect.anchoredPosition.x < -1100f)
                 {
@@ -216,27 +237,58 @@ namespace JinYanMaoYing
         {
             spawnCount++;
             int kind = beasts < 3 && spawnCount % 3 == 0 ? 1 : (Random.value < 0.65f ? 0 : 2);
+            if (kind == 0) { SpawnCoinTrail(); return; }
             bool lantern = kind == 2 && Random.value < 0.5f;
-            Sprite sprite = kind == 0 ? coinSprite : kind == 1 ? beastSprites[beasts] :
-                (lantern ? lanternSprite : lionSprite);
+            Sprite sprite = kind == 1 ? beastSprites[beasts] : (lantern ? lanternSprite : lionSprite);
             if (sprite == null) return;
-            GameObject obj = new GameObject(kind == 0 ? "金币" : kind == 1 ? "脊兽" : lantern ? "宫灯" : "石狮", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            GameObject obj = new GameObject(kind == 1 ? "脊兽" : lantern ? "宫灯" : "石狮", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             obj.transform.SetParent(playArea, false);
             RectTransform rect = obj.GetComponent<RectTransform>();
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = kind == 0 ? new Vector2(92f, 92f) : kind == 1 ? new Vector2(140f, 150f) : new Vector2(150f, 170f);
-            rect.anchoredPosition = new Vector2(1060f, kind == 0 ? -120f : kind == 1 ? -225f : lantern ? -120f : -235f);
+            rect.sizeDelta = kind == 1 ? new Vector2(112f, 120f) : new Vector2(150f, 170f);
+            float beastY = new[] { -215f, -95f, -160f }[beasts];
+            float y = kind == 1 ? beastY : lantern ? -120f : -235f;
+            rect.anchoredPosition = new Vector2(1060f, y);
+            if (kind == 1) rect.localRotation = Quaternion.Euler(0f, 0f, beasts == 1 ? 8f : -7f);
             Image image = obj.GetComponent<Image>();
             image.sprite = sprite;
             image.preserveAspect = true;
             image.raycastTarget = false;
-            items.Add(new SpawnedItem { rect = rect, kind = kind, beastIndex = kind == 1 ? beasts : -1 });
+            items.Add(new SpawnedItem { rect = rect, kind = kind, beastIndex = kind == 1 ? beasts : -1,
+                baseY = y, phase = spawnCount * 1.7f });
+        }
+
+        private void SpawnCoinTrail()
+        {
+            if (coinSprite == null) return;
+            // 每组五枚金币形成低弧线、高弧线或台阶；三只脊兽正常收集时约有四组金币。
+            float[][] paths = {
+                new[] { -230f, -190f, -135f, -190f, -230f },
+                new[] { -210f, -140f, -65f, -140f, -210f },
+                new[] { -230f, -175f, -120f, -65f, -120f }
+            };
+            float[] path = paths[(spawnCount / 2) % paths.Length];
+            for (int i = 0; i < path.Length; i++)
+            {
+                GameObject obj = new GameObject("金币" + (i + 1), typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                obj.transform.SetParent(playArea, false);
+                RectTransform rect = obj.GetComponent<RectTransform>();
+                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.sizeDelta = new Vector2(70f, 70f);
+                rect.anchoredPosition = new Vector2(1060f + i * 88f, path[i]);
+                Image image = obj.GetComponent<Image>();
+                image.sprite = coinSprite;
+                image.preserveAspect = true;
+                image.raycastTarget = false;
+                items.Add(new SpawnedItem { rect = rect, kind = 0, beastIndex = -1, baseY = path[i] });
+            }
         }
 
         private void RefreshStatus()
         {
-            if (statusText != null) statusText.text = "脊兽 " + beasts + "/3     金币 " + coins + "     体力 " + health;
+            if (statusText != null) statusText.text = "脊兽 " + beasts + "/3     金币 " + coins + "     得分 " + (coins * 20) + "     体力 " + health;
             if (hintText != null) hintText.text = "空格 / ↑ 二段跳    ↓ 蹲下躲宫灯    收集三只脊兽";
         }
 
@@ -246,6 +298,66 @@ namespace JinYanMaoYing
             if (win) GameNavigator.WuMenCleared = true;
             if (resultPanel != null) resultPanel.SetActive(true);
             if (resultText != null) resultText.text = win ? "午门已通关\n脊兽已归位" : "旅途暂歇\n再试一次吧";
+            StartCoroutine(ShowResult(win));
+        }
+
+        private IEnumerator ShowResult(bool win)
+        {
+            if (resultPanel == null) yield break;
+            CanvasGroup group = resultPanel.GetComponent<CanvasGroup>();
+            if (group == null) group = resultPanel.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = false;
+            float time = 0f;
+            while (time < 0.6f)
+            {
+                time += Time.unscaledDeltaTime;
+                group.alpha = Mathf.Clamp01(time / 0.6f);
+                yield return null;
+            }
+            group.alpha = 1f;
+            if (!win) { group.blocksRaycasts = true; yield break; }
+
+            yield return new WaitForSecondsRealtime(2.2f);
+            if (resultText != null)
+            {
+                Color original = resultText.color;
+                time = 0f;
+                while (time < 0.4f)
+                {
+                    time += Time.unscaledDeltaTime;
+                    resultText.color = new Color(original.r, original.g, original.b, 1f - Mathf.Clamp01(time / 0.4f));
+                    yield return null;
+                }
+                resultText.gameObject.SetActive(false);
+            }
+
+            int score = coins * 20;
+            if (rankImage != null)
+            {
+                // 正常第三只脊兽约在第九次投放后可收集；约四组、二十枚金币可供收集。
+                rankImage.sprite = score >= 280 ? rankExcellent : score >= 160 ? rankFirst : rankSecond;
+                rankImage.gameObject.SetActive(true);
+            }
+            if (scoreText != null)
+            {
+                scoreText.text = "本局得分 " + score + "  ·  金币 " + coins + " 枚";
+                scoreText.gameObject.SetActive(true);
+            }
+            time = 0f;
+            while (time < 0.5f)
+            {
+                time += Time.unscaledDeltaTime;
+                float alpha = Mathf.Clamp01(time / 0.5f);
+                if (rankImage != null) rankImage.color = new Color(1f, 1f, 1f, alpha);
+                if (scoreText != null)
+                {
+                    Color c = scoreText.color;
+                    scoreText.color = new Color(c.r, c.g, c.b, alpha);
+                }
+                yield return null;
+            }
+            group.blocksRaycasts = true;
         }
 
         public void OpenSettings()
@@ -274,6 +386,7 @@ namespace JinYanMaoYing
                 introPlayer.targetTexture = null;
             }
             if (videoTexture != null) { videoTexture.Release(); Destroy(videoTexture); }
+            if (slicedHudSprite != null) Destroy(slicedHudSprite);
         }
     }
 }

@@ -39,7 +39,9 @@ public static class WindowsBuild
         if (runner == null || runner.cat == null || runner.playArea == null || runner.coinSprite == null ||
             runner.lionSprite == null || runner.lanternSprite == null || runner.beastSprites == null || runner.beastSprites.Length != 3 ||
             runner.runFrames == null || runner.runFrames.Length != 3 || runner.backgrounds == null || runner.backgrounds.Length != 2 ||
-            runner.introClip == null || runner.missionPrompt == null || runner.settingsPanel == null || runner.crouchSprite == null)
+            runner.introClip == null || runner.missionPrompt == null || runner.settingsPanel == null || runner.crouchSprite == null ||
+            runner.rankImage == null || runner.scoreText == null || runner.rankExcellent == null || runner.rankFirst == null || runner.rankSecond == null ||
+            runner.hudFrame == null || runner.hudFrame.sprite == null)
             throw new Exception("午门关卡缺少必需的玩法或图片引用");
         foreach (Sprite beast in runner.beastSprites) if (beast == null) throw new Exception("脊兽图片引用丢失");
         foreach (Sprite frame in runner.runFrames) if (frame == null) throw new Exception("黑猫跑动帧丢失");

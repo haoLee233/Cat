@@ -211,8 +211,9 @@ public static class RebuildScenes
         background1.preserveAspect = background2.preserveAspect = false;
         RectTransform playArea = Rect(canvas.transform, "游戏区域", new Vector2(1920f, 1080f), Vector2.zero);
         Image cat = Picture(playArea, "奔跑黑猫", "Assets/Art/WuMen/跑动1.png", new Vector2(260f, 155f), new Vector2(-600f, -260f));
-        ColorPanel(canvas.transform, "状态栏底色", new Vector2(1920f, 108f), new Vector2(0f, 486f), new Color(0.07f, 0.07f, 0.07f, 0.68f));
-        Text status = Label(canvas.transform, "收集与体力", "", 40, new Vector2(1100f, 78f), new Vector2(-180f, 485f), Color.white);
+        Image hudFrame = Picture(canvas.transform, "午门顶部卷轴", "Assets/Art/WuMen/WM_Dialog_Box.png", new Vector2(1660f, 165f), new Vector2(0f, 455f));
+        hudFrame.preserveAspect = false;
+        Text status = Label(canvas.transform, "收集得分与体力", "", 37, new Vector2(1250f, 86f), new Vector2(-105f, 455f), new Color(0.16f, 0.12f, 0.10f));
         Text hint = Label(canvas.transform, "操作提示", "", 34, new Vector2(1150f, 66f), new Vector2(0f, -480f), new Color(0.22f, 0.13f, 0.12f));
         WuMenRunner runner = new GameObject("午门关卡控制", typeof(WuMenRunner)).GetComponent<WuMenRunner>();
         runner.playArea = playArea;
@@ -226,6 +227,7 @@ public static class RebuildScenes
             AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动3.png")
         };
         runner.statusText = status;
+        runner.hudFrame = hudFrame;
         runner.hintText = hint;
         runner.coinSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/金币.png");
         runner.beastSprites = new[] {
@@ -261,8 +263,14 @@ public static class RebuildScenes
         RectTransform panel = Rect(canvas.transform, "结算与暂停面板", new Vector2(680f, 420f), Vector2.zero);
         Image panelImage = panel.gameObject.AddComponent<Image>();
         panelImage.color = new Color(0.97f, 0.93f, 0.84f, 0.95f);
+        panel.gameObject.AddComponent<CanvasGroup>();
         runner.resultPanel = panel.gameObject;
         runner.resultText = Label(panel, "结算文字", "", 60, new Vector2(600f, 190f), new Vector2(0f, 90f), new Color(0.15f, 0.10f, 0.10f));
+        runner.rankImage = Picture(panel, "通关评级", "Assets/Art/WuMen/评级乙.png", new Vector2(330f, 155f), new Vector2(0f, 75f));
+        runner.rankExcellent = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/评级超凡.png");
+        runner.rankFirst = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/评级甲.png");
+        runner.rankSecond = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/评级乙.png");
+        runner.scoreText = Label(panel, "结算得分", "", 39, new Vector2(580f, 65f), new Vector2(0f, -30f), new Color(0.15f, 0.10f, 0.10f));
         Button retry = ActionButton(panel, "重新开始", "重新开始", new Vector2(270f, 85f), new Vector2(-155f, -120f));
         Button toMap = ActionButton(panel, "返回地图", "返回地图", new Vector2(270f, 85f), new Vector2(155f, -120f));
         UnityEventTools.AddPersistentListener(retry.onClick, runner.Restart);
