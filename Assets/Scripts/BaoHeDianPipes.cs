@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace JinYanMaoYing
@@ -75,7 +74,7 @@ namespace JinYanMaoYing
             if (resultText != null) resultText.text = won ? "水路接通\n保和殿已通关" : "时间已到\n再试一次吧";
         }
 
-        public void Restart() { SceneManager.LoadScene(GameNavigator.BaoHeDian); }
-        public void OpenMap() { SceneManager.LoadScene(GameNavigator.Map); }
+        public void Restart() { SceneTransition.Load(GameNavigator.BaoHeDian); }
+        public void OpenMap() { SceneTransition.Load(GameNavigator.Map); }
     }
 }

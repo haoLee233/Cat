@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 public static class RebuildScenes
 {
@@ -144,6 +145,23 @@ public static class RebuildScenes
         return button;
     }
 
+    private static Button SpriteButton(Transform parent, string name, string normalPath, string hoverPath,
+        Vector2 size, Vector2 position, float lift = 0f)
+    {
+        Image image = Picture(parent, name, normalPath, size, position);
+        image.raycastTarget = true;
+        Button button = image.gameObject.AddComponent<Button>();
+        button.transition = Selectable.Transition.None;
+        button.targetGraphic = image;
+        SpriteHoverButton hover = image.gameObject.AddComponent<SpriteHoverButton>();
+        hover.normal = image.sprite;
+        hover.highlighted = string.IsNullOrEmpty(hoverPath) ? null : AssetDatabase.LoadAssetAtPath<Sprite>(hoverPath);
+        hover.lift = lift;
+        if (!string.IsNullOrEmpty(hoverPath) && hover.highlighted == null)
+            throw new Exception("缺少按钮高亮图片: " + hoverPath);
+        return button;
+    }
+
     private static string Save(Scene scene, string name)
     {
         string path = "Assets/Scenes/" + name + ".unity";
@@ -188,15 +206,24 @@ public static class RebuildScenes
     {
         Scene scene = NewScene(GameNavigator.WuMen);
         Canvas canvas = MakeCanvas();
-        Picture(canvas.transform, "午门背景", "Assets/Art/WuMen/WM_Bg_Run.png", new Vector2(1920f, 1080f), Vector2.zero);
+        Image background1 = Picture(canvas.transform, "午门滚动背景1", "Assets/Art/WuMen/WM_Bg_Run.png", new Vector2(1920f, 1080f), Vector2.zero);
+        Image background2 = Picture(canvas.transform, "午门滚动背景2", "Assets/Art/WuMen/WM_Bg_Run.png", new Vector2(1920f, 1080f), new Vector2(1920f, 0f));
+        background1.preserveAspect = background2.preserveAspect = false;
         RectTransform playArea = Rect(canvas.transform, "游戏区域", new Vector2(1920f, 1080f), Vector2.zero);
-        Image cat = Picture(playArea, "黑猫", "Assets/Art/小猫2_副本.png", new Vector2(230f, 155f), new Vector2(-600f, -260f));
+        Image cat = Picture(playArea, "奔跑黑猫", "Assets/Art/WuMen/跑动1.png", new Vector2(260f, 155f), new Vector2(-600f, -260f));
         ColorPanel(canvas.transform, "状态栏底色", new Vector2(1920f, 108f), new Vector2(0f, 486f), new Color(0.07f, 0.07f, 0.07f, 0.68f));
         Text status = Label(canvas.transform, "收集与体力", "", 40, new Vector2(1100f, 78f), new Vector2(-180f, 485f), Color.white);
         Text hint = Label(canvas.transform, "操作提示", "", 34, new Vector2(1150f, 66f), new Vector2(0f, -480f), new Color(0.22f, 0.13f, 0.12f));
         WuMenRunner runner = new GameObject("午门关卡控制", typeof(WuMenRunner)).GetComponent<WuMenRunner>();
         runner.playArea = playArea;
+        runner.backgrounds = new[] { background1.rectTransform, background2.rectTransform };
         runner.cat = cat.rectTransform;
+        runner.catImage = cat;
+        runner.runFrames = new[] {
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动1.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动2.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动3.png")
+        };
         runner.statusText = status;
         runner.hintText = hint;
         runner.coinSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/金币.png");
@@ -207,8 +234,25 @@ public static class RebuildScenes
         };
         runner.lionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/Obstacle_Lion.png");
         runner.lanternSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/Obstacle_Lantern.png");
-        Button pause = ActionButton(canvas.transform, "暂停按钮", "暂停", new Vector2(180f, 72f), new Vector2(840f, 485f));
-        UnityEventTools.AddPersistentListener(pause.onClick, runner.TogglePause);
+        Button settings = SpriteButton(canvas.transform, "设置按钮", "Assets/Art/WuMen/设置.png", null,
+            new Vector2(130f, 130f), new Vector2(840f, 440f), 10f);
+        UnityEventTools.AddPersistentListener(settings.onClick, runner.OpenSettings);
+
+        RectTransform settingsPanel = Rect(canvas.transform, "设置页面", new Vector2(1920f, 1080f), Vector2.zero);
+        Image shade = settingsPanel.gameObject.AddComponent<Image>();
+        shade.color = new Color(0f, 0f, 0f, 0.65f);
+        shade.raycastTarget = true;
+        Picture(settingsPanel, "原版设置面板", "Assets/Art/WuMen/设置面板.png", new Vector2(700f, 920f), Vector2.zero);
+        runner.settingsPanel = settingsPanel.gameObject;
+        Button resume = SpriteButton(settingsPanel, "返回游戏", "Assets/Art/WuMen/返回游戏.png",
+            "Assets/Art/WuMen/返回游戏-选中.png", new Vector2(370f, 105f), new Vector2(0f, 180f));
+        Button restart = SpriteButton(settingsPanel, "重新开始", "Assets/Art/WuMen/重新开始.png",
+            "Assets/Art/WuMen/重新开始-选中.png", new Vector2(370f, 105f), new Vector2(0f, 10f));
+        Button exit = SpriteButton(settingsPanel, "退出游戏", "Assets/Art/WuMen/退出游戏.png",
+            "Assets/Art/WuMen/退出游戏-选中.png", new Vector2(370f, 105f), new Vector2(0f, -160f));
+        UnityEventTools.AddPersistentListener(resume.onClick, runner.ReturnGame);
+        UnityEventTools.AddPersistentListener(restart.onClick, runner.Restart);
+        UnityEventTools.AddPersistentListener(exit.onClick, runner.OpenMap);
 
         RectTransform panel = Rect(canvas.transform, "结算与暂停面板", new Vector2(680f, 420f), Vector2.zero);
         Image panelImage = panel.gameObject.AddComponent<Image>();
@@ -219,6 +263,23 @@ public static class RebuildScenes
         Button toMap = ActionButton(panel, "返回地图", "返回地图", new Vector2(270f, 85f), new Vector2(155f, -120f));
         UnityEventTools.AddPersistentListener(retry.onClick, runner.Restart);
         UnityEventTools.AddPersistentListener(toMap.onClick, runner.OpenMap);
+
+        Image prompt = Picture(canvas.transform, "午门任务提示", "Assets/Art/WuMen/提示图.png", new Vector2(1360f, 630f), new Vector2(-2200f, 0f));
+        runner.missionPrompt = prompt.rectTransform;
+        RectTransform videoOverlay = Rect(canvas.transform, "午门片头CG", new Vector2(1920f, 1080f), Vector2.zero);
+        Image black = videoOverlay.gameObject.AddComponent<Image>();
+        black.color = Color.black;
+        black.raycastTarget = true;
+        RectTransform videoRect = Rect(videoOverlay, "视频画面", new Vector2(1920f, 1080f), Vector2.zero);
+        RawImage raw = videoRect.gameObject.AddComponent<RawImage>();
+        raw.color = Color.white;
+        raw.raycastTarget = false;
+        runner.videoOverlay = videoOverlay.gameObject;
+        runner.videoScreen = raw;
+        VideoPlayer player = new GameObject("午门CG播放器", typeof(VideoPlayer)).GetComponent<VideoPlayer>();
+        runner.introPlayer = player;
+        runner.introClip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_one_video.m4v");
+        if (runner.introClip == null) throw new Exception("缺少午门片头 Scene_one_video.m4v");
         return Save(scene, GameNavigator.WuMen);
     }
 

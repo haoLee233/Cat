@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace JinYanMaoYing
 {
@@ -10,10 +9,10 @@ namespace JinYanMaoYing
         public const string WuMen = "午门追逐";
         public const string BaoHeDian = "保和殿水管";
 
-        public void OpenCover() { SceneManager.LoadScene(Cover); }
-        public void OpenMap() { SceneManager.LoadScene(Map); }
-        public void OpenWuMen() { SceneManager.LoadScene(WuMen); }
-        public void OpenBaoHeDian() { SceneManager.LoadScene(BaoHeDian); }
+        public void OpenCover() { SceneTransition.Load(Cover); }
+        public void OpenMap() { SceneTransition.Load(Map); }
+        public void OpenWuMen() { SceneTransition.Load(WuMen); }
+        public void OpenBaoHeDian() { SceneTransition.Load(BaoHeDian); }
         public void Quit() { Application.Quit(); }
 
         public static bool WuMenCleared
