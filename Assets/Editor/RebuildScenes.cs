@@ -219,6 +219,7 @@ public static class RebuildScenes
         runner.backgrounds = new[] { background1.rectTransform, background2.rectTransform };
         runner.cat = cat.rectTransform;
         runner.catImage = cat;
+        runner.crouchSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/趴下.png");
         runner.runFrames = new[] {
             AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动1.png"),
             AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动2.png"),
@@ -235,7 +236,7 @@ public static class RebuildScenes
         runner.lionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/Obstacle_Lion.png");
         runner.lanternSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/Obstacle_Lantern.png");
         Button settings = SpriteButton(canvas.transform, "设置按钮", "Assets/Art/WuMen/设置.png", null,
-            new Vector2(130f, 130f), new Vector2(840f, 440f), 10f);
+            new Vector2(130f, 130f), new Vector2(840f, 440f), 3f);
         UnityEventTools.AddPersistentListener(settings.onClick, runner.OpenSettings);
 
         RectTransform settingsPanel = Rect(canvas.transform, "设置页面", new Vector2(1920f, 1080f), Vector2.zero);
@@ -245,14 +246,17 @@ public static class RebuildScenes
         Picture(settingsPanel, "原版设置面板", "Assets/Art/WuMen/设置面板.png", new Vector2(700f, 920f), Vector2.zero);
         runner.settingsPanel = settingsPanel.gameObject;
         Button resume = SpriteButton(settingsPanel, "返回游戏", "Assets/Art/WuMen/返回游戏.png",
-            "Assets/Art/WuMen/返回游戏-选中.png", new Vector2(370f, 105f), new Vector2(0f, 180f));
+            "Assets/Art/WuMen/返回游戏-选中.png", new Vector2(250f, 70f), new Vector2(0f, 180f));
         Button restart = SpriteButton(settingsPanel, "重新开始", "Assets/Art/WuMen/重新开始.png",
-            "Assets/Art/WuMen/重新开始-选中.png", new Vector2(370f, 105f), new Vector2(0f, 10f));
+            "Assets/Art/WuMen/重新开始-选中.png", new Vector2(250f, 70f), new Vector2(0f, 10f));
         Button exit = SpriteButton(settingsPanel, "退出游戏", "Assets/Art/WuMen/退出游戏.png",
-            "Assets/Art/WuMen/退出游戏-选中.png", new Vector2(370f, 105f), new Vector2(0f, -160f));
+            "Assets/Art/WuMen/退出游戏-选中.png", new Vector2(250f, 70f), new Vector2(0f, -160f));
+        Button close = SpriteButton(settingsPanel, "关闭设置", "Assets/Art/WuMen/叉号.png", null,
+            new Vector2(70f, 90f), new Vector2(315f, 380f), 3f);
         UnityEventTools.AddPersistentListener(resume.onClick, runner.ReturnGame);
         UnityEventTools.AddPersistentListener(restart.onClick, runner.Restart);
         UnityEventTools.AddPersistentListener(exit.onClick, runner.OpenMap);
+        UnityEventTools.AddPersistentListener(close.onClick, runner.ReturnGame);
 
         RectTransform panel = Rect(canvas.transform, "结算与暂停面板", new Vector2(680f, 420f), Vector2.zero);
         Image panelImage = panel.gameObject.AddComponent<Image>();
@@ -274,6 +278,10 @@ public static class RebuildScenes
         RawImage raw = videoRect.gameObject.AddComponent<RawImage>();
         raw.color = Color.white;
         raw.raycastTarget = false;
+        AspectRatioFitter fit = videoRect.gameObject.AddComponent<AspectRatioFitter>();
+        fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        Button skip = ActionButton(videoOverlay, "跳过片头", "跳过片头", new Vector2(230f, 72f), new Vector2(805f, 460f));
+        UnityEventTools.AddPersistentListener(skip.onClick, runner.SkipVideo);
         runner.videoOverlay = videoOverlay.gameObject;
         runner.videoScreen = raw;
         VideoPlayer player = new GameObject("午门CG播放器", typeof(VideoPlayer)).GetComponent<VideoPlayer>();

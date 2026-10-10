@@ -14,6 +14,7 @@ namespace JinYanMaoYing
         public RectTransform cat;
         public Image catImage;
         public Sprite[] runFrames;
+        public Sprite crouchSprite;
         public Text statusText;
         public Text hintText;
         public GameObject resultPanel;
@@ -34,14 +35,16 @@ namespace JinYanMaoYing
         private readonly List<SpawnedItem> items = new List<SpawnedItem>();
         private RenderTexture videoTexture;
         private float verticalSpeed, jumpHeight, nextSpawn, elapsed, runFrameTime;
-        private int jumpsUsed, coins, beasts;
+        private int jumpsUsed, coins, beasts, spawnCount;
         private int health = 3;
         private bool finished, paused, introPlaying = true;
+        private bool ducking;
 
         private sealed class SpawnedItem
         {
             public RectTransform rect;
             public int kind; // 0 金币，1 脊兽，2 障碍
+            public int beastIndex;
         }
 
         private void Start()
@@ -58,12 +61,17 @@ namespace JinYanMaoYing
                 StartCoroutine(ShowMission());
                 return;
             }
-            videoTexture = new RenderTexture(1920, 1080, 0);
+            int videoWidth = introClip.width > 0 ? Mathf.Clamp((int)introClip.width, 16, 4096) : 1920;
+            int videoHeight = introClip.height > 0 ? Mathf.Clamp((int)introClip.height, 16, 4096) : 1080;
+            videoTexture = new RenderTexture(videoWidth, videoHeight, 0);
             videoTexture.Create();
             videoScreen.texture = videoTexture;
+            AspectRatioFitter fit = videoScreen.GetComponent<AspectRatioFitter>();
+            if (fit != null) fit.aspectRatio = (float)videoWidth / videoHeight;
             introPlayer.clip = introClip;
             introPlayer.targetTexture = videoTexture;
             introPlayer.renderMode = VideoRenderMode.RenderTexture;
+            introPlayer.aspectRatio = VideoAspectRatio.FitInside;
             introPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
             introPlayer.isLooping = false;
             introPlayer.prepareCompleted += OnVideoPrepared;
@@ -84,7 +92,10 @@ namespace JinYanMaoYing
             }
         }
 
-        private void OnVideoPrepared(VideoPlayer player) { player.Play(); }
+        private void OnVideoPrepared(VideoPlayer player)
+        {
+            if (videoOverlay != null && videoOverlay.activeSelf) player.Play();
+        }
         private void OnVideoFinished(VideoPlayer player) { FinishVideo(); }
         private void OnVideoError(VideoPlayer player, string message)
         {
@@ -99,6 +110,8 @@ namespace JinYanMaoYing
             videoOverlay.SetActive(false);
             StartCoroutine(ShowMission());
         }
+
+        public void SkipVideo() { FinishVideo(); }
 
         private IEnumerator ShowMission()
         {
@@ -130,7 +143,6 @@ namespace JinYanMaoYing
             float dt = Time.deltaTime;
             elapsed += dt;
             MoveBackground(dt);
-            AnimateCat(dt);
             bool keyboardJump = Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow);
             bool mouseJump = Input.GetMouseButtonDown(0) &&
                 (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject());
@@ -139,8 +151,8 @@ namespace JinYanMaoYing
                 verticalSpeed = jumpsUsed == 0 ? 840f : 780f;
                 jumpsUsed++;
             }
-            bool ducking = Input.GetKey(KeyCode.DownArrow) && jumpHeight <= 0.01f;
-            cat.localScale = ducking ? new Vector3(1f, 0.64f, 1f) : Vector3.one;
+            ducking = Input.GetKey(KeyCode.DownArrow) && jumpHeight <= 0.01f;
+            AnimateCat(dt);
             verticalSpeed -= 2100f * dt;
             jumpHeight = Mathf.Max(0f, jumpHeight + verticalSpeed * dt);
             if (jumpHeight <= 0f) { verticalSpeed = 0f; jumpsUsed = 0; }
@@ -157,11 +169,12 @@ namespace JinYanMaoYing
                 item.rect.anchoredPosition += Vector2.left * 560f * dt;
                 float dx = Mathf.Abs(item.rect.anchoredPosition.x - CatX);
                 float dy = Mathf.Abs(item.rect.anchoredPosition.y - cat.anchoredPosition.y);
-                float halfHeight = (cat.sizeDelta.y * cat.localScale.y + item.rect.sizeDelta.y) * 0.5f;
+                float catHeight = ducking ? 95f : cat.sizeDelta.y;
+                float halfHeight = (catHeight + item.rect.sizeDelta.y) * 0.5f;
                 if (dx < 85f && dy < halfHeight)
                 {
                     if (item.kind == 0) coins++;
-                    else if (item.kind == 1) beasts++;
+                    else if (item.kind == 1 && item.beastIndex == beasts) beasts++;
                     else health--;
                     Destroy(item.rect.gameObject);
                     items.RemoveAt(i);
@@ -191,7 +204,9 @@ namespace JinYanMaoYing
 
         private void AnimateCat(float dt)
         {
-            if (catImage == null || runFrames == null || runFrames.Length == 0) return;
+            if (catImage == null) return;
+            if (ducking && crouchSprite != null) { catImage.sprite = crouchSprite; return; }
+            if (runFrames == null || runFrames.Length == 0) return;
             runFrameTime += dt;
             int index = Mathf.FloorToInt(runFrameTime / 0.13f) % runFrames.Length;
             if (runFrames[index] != null) catImage.sprite = runFrames[index];
@@ -199,10 +214,10 @@ namespace JinYanMaoYing
 
         private void SpawnNext()
         {
-            int roll = Random.Range(0, 5);
-            int kind = roll == 0 ? 1 : roll <= 2 ? 0 : 2;
+            spawnCount++;
+            int kind = beasts < 3 && spawnCount % 3 == 0 ? 1 : (Random.value < 0.65f ? 0 : 2);
             bool lantern = kind == 2 && Random.value < 0.5f;
-            Sprite sprite = kind == 0 ? coinSprite : kind == 1 ? beastSprites[Random.Range(0, beastSprites.Length)] :
+            Sprite sprite = kind == 0 ? coinSprite : kind == 1 ? beastSprites[beasts] :
                 (lantern ? lanternSprite : lionSprite);
             if (sprite == null) return;
             GameObject obj = new GameObject(kind == 0 ? "金币" : kind == 1 ? "脊兽" : lantern ? "宫灯" : "石狮", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -216,7 +231,7 @@ namespace JinYanMaoYing
             image.sprite = sprite;
             image.preserveAspect = true;
             image.raycastTarget = false;
-            items.Add(new SpawnedItem { rect = rect, kind = kind });
+            items.Add(new SpawnedItem { rect = rect, kind = kind, beastIndex = kind == 1 ? beasts : -1 });
         }
 
         private void RefreshStatus()
