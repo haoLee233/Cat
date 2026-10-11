@@ -26,18 +26,20 @@ public static class RebuildScenes
         string map = BuildMap();
         string wuMen = BuildWuMen();
         string baoHeDian = BuildBaoHeDian();
+        string knowledge = BuildWuMenKnowledge();
         EditorBuildSettings.scenes = new[]
         {
             new EditorBuildSettingsScene(cover, true),
             new EditorBuildSettingsScene(map, true),
             new EditorBuildSettingsScene(wuMen, true),
             new EditorBuildSettingsScene(baoHeDian, true),
+            new EditorBuildSettingsScene(knowledge, true),
         };
         PlayerSettings.productName = "锦檐猫影：筑梦人";
         PlayerSettings.companyName = "锦檐猫影";
         AssetDatabase.SaveAssets();
         EditorSceneManager.OpenScene(cover);
-        Debug.Log("REMAKE_SCENES_READY " + cover + ", " + map + ", " + wuMen + ", " + baoHeDian);
+        Debug.Log("REMAKE_SCENES_READY " + cover + ", " + map + ", " + wuMen + ", " + baoHeDian + ", " + knowledge);
     }
 
     private static void ConfigureArt()
@@ -179,6 +181,8 @@ public static class RebuildScenes
         GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
         Button start = ActionButton(canvas.transform, "开始游戏", "点击开始旅程", new Vector2(600f, 92f), new Vector2(0f, -420f));
         UnityEventTools.AddPersistentListener(start.onClick, nav.OpenMap);
+        Button quit = ActionButton(canvas.transform, "退出游戏", "退出游戏", new Vector2(235f, 72f), new Vector2(810f, 460f));
+        UnityEventTools.AddPersistentListener(quit.onClick, nav.Quit);
         return Save(scene, GameNavigator.Cover);
     }
 
@@ -198,6 +202,8 @@ public static class RebuildScenes
         UnityEventTools.AddPersistentListener(baoHe.onClick, nav.OpenBaoHeDian);
         Button back = ActionButton(canvas.transform, "返回封面", "返回封面", new Vector2(290f, 76f), new Vector2(-780f, 430f));
         UnityEventTools.AddPersistentListener(back.onClick, nav.OpenCover);
+        Button quit = ActionButton(canvas.transform, "退出游戏", "退出游戏", new Vector2(270f, 76f), new Vector2(790f, 430f));
+        UnityEventTools.AddPersistentListener(quit.onClick, nav.Quit);
         Label(canvas.transform, "进度说明", "午门与保和殿已开放；通关进度会自动保存", 34, new Vector2(1150f, 62f), new Vector2(0f, -430f), new Color(0.18f, 0.13f, 0.12f));
         return Save(scene, GameNavigator.Map);
     }
@@ -211,9 +217,9 @@ public static class RebuildScenes
         background1.preserveAspect = background2.preserveAspect = false;
         RectTransform playArea = Rect(canvas.transform, "游戏区域", new Vector2(1920f, 1080f), Vector2.zero);
         Image cat = Picture(playArea, "奔跑黑猫", "Assets/Art/WuMen/跑动1.png", new Vector2(260f, 155f), new Vector2(-600f, -260f));
-        Image hudFrame = Picture(canvas.transform, "午门顶部卷轴", "Assets/Art/WuMen/WM_Dialog_Box.png", new Vector2(1660f, 165f), new Vector2(0f, 455f));
+        Image hudFrame = Picture(canvas.transform, "午门顶部卷轴", "Assets/Art/WuMen/WM_Dialog_Box.png", new Vector2(1660f, 235f), new Vector2(0f, 420f));
         hudFrame.preserveAspect = false;
-        Text status = Label(canvas.transform, "收集得分与体力", "", 37, new Vector2(1250f, 86f), new Vector2(-105f, 455f), new Color(0.16f, 0.12f, 0.10f));
+        Text status = Label(canvas.transform, "收集得分与体力", "", 37, new Vector2(1250f, 86f), new Vector2(-105f, 420f), new Color(0.16f, 0.12f, 0.10f));
         Text hint = Label(canvas.transform, "操作提示", "", 34, new Vector2(1150f, 66f), new Vector2(0f, -480f), new Color(0.22f, 0.13f, 0.12f));
         WuMenRunner runner = new GameObject("午门关卡控制", typeof(WuMenRunner)).GetComponent<WuMenRunner>();
         runner.playArea = playArea;
@@ -257,7 +263,7 @@ public static class RebuildScenes
             new Vector2(70f, 90f), new Vector2(315f, 380f), 3f);
         UnityEventTools.AddPersistentListener(resume.onClick, runner.ReturnGame);
         UnityEventTools.AddPersistentListener(restart.onClick, runner.Restart);
-        UnityEventTools.AddPersistentListener(exit.onClick, runner.OpenMap);
+        UnityEventTools.AddPersistentListener(exit.onClick, runner.QuitGame);
         UnityEventTools.AddPersistentListener(close.onClick, runner.ReturnGame);
 
         RectTransform panel = Rect(canvas.transform, "结算与暂停面板", new Vector2(680f, 420f), Vector2.zero);
@@ -282,7 +288,9 @@ public static class RebuildScenes
         Image black = videoOverlay.gameObject.AddComponent<Image>();
         black.color = Color.black;
         black.raycastTarget = true;
-        RectTransform videoRect = Rect(videoOverlay, "视频画面", new Vector2(1920f, 1080f), Vector2.zero);
+        // 给原片留安全边距；即使视频编码含边缘信息，也完整落在屏幕内。
+        RectTransform safeVideoFrame = Rect(videoOverlay, "完整视频安全画框", new Vector2(1520f, 850f), Vector2.zero);
+        RectTransform videoRect = Rect(safeVideoFrame, "视频画面", new Vector2(1520f, 850f), Vector2.zero);
         RawImage raw = videoRect.gameObject.AddComponent<RawImage>();
         raw.color = Color.white;
         raw.raycastTarget = false;
@@ -297,6 +305,43 @@ public static class RebuildScenes
         runner.introClip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_one_video.m4v");
         if (runner.introClip == null) throw new Exception("缺少午门片头 Scene_one_video.m4v");
         return Save(scene, GameNavigator.WuMen);
+    }
+
+    private static string BuildWuMenKnowledge()
+    {
+        Scene scene = NewScene(GameNavigator.WuMenKnowledge);
+        Canvas canvas = MakeCanvas();
+        ColorPanel(canvas.transform, "宣纸黄底", new Vector2(1920f, 1080f), Vector2.zero,
+            new Color(0.93f, 0.84f, 0.62f));
+        ColorPanel(canvas.transform, "内层纸面", new Vector2(1800f, 950f), new Vector2(0f, -18f),
+            new Color(1f, 0.97f, 0.83f, 0.76f));
+        ColorPanel(canvas.transform, "朱砂标题线", new Vector2(1710f, 5f), new Vector2(0f, 350f),
+            new Color(0.56f, 0.20f, 0.16f));
+        Label(canvas.transform, "主题", "午门营造录 · 匠心与脊兽", 61,
+            new Vector2(1120f, 95f), new Vector2(-175f, 420f), new Color(0.28f, 0.13f, 0.09f));
+        GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
+        Button exit = ActionButton(canvas.transform, "退出科普", "退出", new Vector2(210f, 75f), new Vector2(790f, 422f));
+        UnityEventTools.AddPersistentListener(exit.onClick, nav.OpenMap);
+
+        Picture(canvas.transform, "午门实景照片", "Assets/Art/WuMen/Education/MeridianGate.jpg",
+            new Vector2(770f, 465f), new Vector2(-440f, 64f));
+        Picture(canvas.transform, "脊兽实景照片", "Assets/Art/WuMen/Education/RoofBeasts.jpg",
+            new Vector2(770f, 465f), new Vector2(440f, 64f));
+        Label(canvas.transform, "午门图注", "午门 · 紫禁城正门", 32,
+            new Vector2(760f, 56f), new Vector2(-440f, -205f), new Color(0.40f, 0.17f, 0.13f));
+        Label(canvas.transform, "脊兽图注", "太和殿屋脊上的走兽", 32,
+            new Vector2(760f, 56f), new Vector2(440f, -205f), new Color(0.40f, 0.17f, 0.13f));
+        Text wuText = Label(canvas.transform, "午门介绍",
+            "午门平面呈‘凹’字形，城楼与两翼相互呼应，\n宛如朱雀展翅，因此又称‘五凤楼’。\n层层递进的门庑布局，凝结着匠人的营造智慧。",
+            32, new Vector2(780f, 180f), new Vector2(-440f, -330f), new Color(0.22f, 0.16f, 0.11f));
+        wuText.alignment = TextAnchor.UpperLeft;
+        Text beastText = Label(canvas.transform, "脊兽介绍",
+            "走兽立于屋顶檐角，兼具建筑装饰与等级象征。\n太和殿有十只走兽，是故宫建筑中的特例。\n这些精细的琉璃构件，留下了匠人的手艺。",
+            32, new Vector2(780f, 180f), new Vector2(440f, -330f), new Color(0.22f, 0.16f, 0.11f));
+        beastText.alignment = TextAnchor.UpperLeft;
+        Label(canvas.transform, "资料来源", "史料：故宫博物院  ·  摄影：そらみみ、秋水平湖（授权见工程 CREDITS.md）",
+            23, new Vector2(1650f, 42f), new Vector2(0f, -480f), new Color(0.37f, 0.26f, 0.18f));
+        return Save(scene, GameNavigator.WuMenKnowledge);
     }
 
     private static string BuildBaoHeDian()

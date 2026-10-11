@@ -16,7 +16,8 @@ public static class WindowsBuild
             "Assets/Scenes/封面.unity",
             "Assets/Scenes/故宫地图.unity",
             "Assets/Scenes/午门追逐.unity",
-            "Assets/Scenes/保和殿水管.unity"
+            "Assets/Scenes/保和殿水管.unity",
+            "Assets/Scenes/午门营造录.unity"
         };
         foreach (string path in scenes)
         {
@@ -65,7 +66,7 @@ public static class WindowsBuild
             scenes = scenes,
             locationPathName = output,
             target = BuildTarget.StandaloneWindows64,
-            options = BuildOptions.Development
+            options = BuildOptions.None
         };
         BuildReport report = BuildPipeline.BuildPlayer(options);
         if (report.summary.result != BuildResult.Succeeded) throw new Exception("Windows 构建失败: " + report.summary.result);

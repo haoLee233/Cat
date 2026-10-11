@@ -38,6 +38,23 @@ namespace JinYanMaoYing
             if (!instance.transitioning) instance.StartCoroutine(instance.Change(sceneName));
         }
 
+        public static void Quit()
+        {
+            if (instance == null) Create();
+            if (!instance.transitioning) instance.StartCoroutine(instance.Exit());
+        }
+
+        private IEnumerator Exit()
+        {
+            transitioning = true;
+            yield return Fade(veil.color.a, 1f, 0.38f);
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+
         private IEnumerator Change(string sceneName)
         {
             transitioning = true;

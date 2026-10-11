@@ -8,12 +8,14 @@ namespace JinYanMaoYing
         public const string Map = "故宫地图";
         public const string WuMen = "午门追逐";
         public const string BaoHeDian = "保和殿水管";
+        public const string WuMenKnowledge = "午门营造录";
 
         public void OpenCover() { SceneTransition.Load(Cover); }
         public void OpenMap() { SceneTransition.Load(Map); }
         public void OpenWuMen() { SceneTransition.Load(WuMen); }
         public void OpenBaoHeDian() { SceneTransition.Load(BaoHeDian); }
-        public void Quit() { Application.Quit(); }
+        public void OpenWuMenKnowledge() { SceneTransition.Load(WuMenKnowledge); }
+        public void Quit() { SceneTransition.Quit(); }
 
         public static bool WuMenCleared
         {

@@ -37,11 +37,12 @@ namespace JinYanMaoYing
         public Sprite lanternSprite;
 
         private const float GroundY = -260f;
-        private const float CatX = -600f;
+        private const float CatStartX = -600f;
         private readonly List<SpawnedItem> items = new List<SpawnedItem>();
         private RenderTexture videoTexture;
         private Sprite slicedHudSprite;
         private float verticalSpeed, jumpHeight, nextSpawn, elapsed, runFrameTime;
+        private float catX = CatStartX, forwardImpulse;
         private int jumpsUsed, coins, beasts, spawnCount;
         private int health = 3;
         private bool finished, paused, introPlaying = true;
@@ -64,7 +65,7 @@ namespace JinYanMaoYing
             if (scoreText != null) scoreText.gameObject.SetActive(false);
             if (settingsPanel != null) settingsPanel.SetActive(false);
             if (missionPrompt != null) missionPrompt.gameObject.SetActive(false);
-            nextSpawn = 1.25f;
+            nextSpawn = 1.15f;
             if (hudFrame != null && hudFrame.sprite != null)
             {
                 Sprite source = hudFrame.sprite;
@@ -162,6 +163,10 @@ namespace JinYanMaoYing
             float dt = Time.deltaTime;
             elapsed += dt;
             MoveBackground(dt);
+            forwardImpulse = Mathf.MoveTowards(forwardImpulse, 0f, 55f * dt);
+            float rhythmDrift = Mathf.Sin(elapsed * 1.8f) * 15f;
+            float targetX = Mathf.Clamp(CatStartX + forwardImpulse + rhythmDrift, -660f, -150f);
+            catX = Mathf.MoveTowards(catX, targetX, 185f * dt);
             bool keyboardJump = Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow);
             bool mouseJump = Input.GetMouseButtonDown(0) &&
                 (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject());
@@ -175,28 +180,29 @@ namespace JinYanMaoYing
             verticalSpeed -= 2100f * dt;
             jumpHeight = Mathf.Max(0f, jumpHeight + verticalSpeed * dt);
             if (jumpHeight <= 0f) { verticalSpeed = 0f; jumpsUsed = 0; }
-            cat.anchoredPosition = new Vector2(CatX, GroundY + jumpHeight);
+            cat.anchoredPosition = new Vector2(catX, GroundY + jumpHeight);
 
             if (elapsed >= nextSpawn)
             {
                 SpawnNext();
-                nextSpawn = elapsed + Random.Range(1.15f, 1.75f);
+                nextSpawn = elapsed + Random.Range(0.96f, 1.26f);
             }
             for (int i = items.Count - 1; i >= 0; i--)
             {
                 SpawnedItem item = items[i];
-                Vector2 position = item.rect.anchoredPosition + Vector2.left * 560f * dt;
+                float speed = Mathf.Min(930f, 690f + elapsed * 5.3f);
+                Vector2 position = item.rect.anchoredPosition + Vector2.left * speed * dt;
                 if (item.kind == 1) position.y = item.baseY + Mathf.Sin(elapsed * 3.4f + item.phase) * 16f;
                 item.rect.anchoredPosition = position;
-                float dx = Mathf.Abs(item.rect.anchoredPosition.x - CatX);
+                float dx = Mathf.Abs(item.rect.anchoredPosition.x - catX);
                 float dy = Mathf.Abs(item.rect.anchoredPosition.y - cat.anchoredPosition.y);
                 float catHeight = ducking ? 95f : cat.sizeDelta.y;
                 float halfHeight = (catHeight + item.rect.sizeDelta.y) * 0.5f;
                 if (dx < 85f && dy < halfHeight)
                 {
-                    if (item.kind == 0) coins++;
-                    else if (item.kind == 1 && item.beastIndex == beasts) beasts++;
-                    else health--;
+                    if (item.kind == 0) { coins++; forwardImpulse = Mathf.Min(400f, forwardImpulse + 28f); }
+                    else if (item.kind == 1 && item.beastIndex == beasts) { beasts++; forwardImpulse = Mathf.Min(400f, forwardImpulse + 110f); }
+                    else { health--; forwardImpulse = Mathf.Max(-50f, forwardImpulse - 105f); }
                     Destroy(item.rect.gameObject);
                     items.RemoveAt(i);
                     RefreshStatus();
@@ -217,7 +223,7 @@ namespace JinYanMaoYing
             foreach (RectTransform background in backgrounds)
             {
                 if (background == null) continue;
-                Vector2 pos = background.anchoredPosition + Vector2.left * 240f * dt;
+                Vector2 pos = background.anchoredPosition + Vector2.left * Mathf.Min(370f, 265f + elapsed * 2.4f) * dt;
                 if (pos.x <= -1920f) pos.x += 3840f;
                 background.anchoredPosition = pos;
             }
@@ -226,7 +232,13 @@ namespace JinYanMaoYing
         private void AnimateCat(float dt)
         {
             if (catImage == null) return;
-            if (ducking && crouchSprite != null) { catImage.sprite = crouchSprite; return; }
+            if (ducking && crouchSprite != null)
+            {
+                catImage.sprite = crouchSprite;
+                cat.sizeDelta = new Vector2(205f, 112f);
+                return;
+            }
+            cat.sizeDelta = new Vector2(260f, 155f);
             if (runFrames == null || runFrames.Length == 0) return;
             runFrameTime += dt;
             int index = Mathf.FloorToInt(runFrameTime / 0.13f) % runFrames.Length;
@@ -236,7 +248,8 @@ namespace JinYanMaoYing
         private void SpawnNext()
         {
             spawnCount++;
-            int kind = beasts < 3 && spawnCount % 3 == 0 ? 1 : (Random.value < 0.65f ? 0 : 2);
+            // 每约十二秒出现一只待收集脊兽；漏掉时下一轮仍会出现。
+            int kind = beasts < 3 && spawnCount % 11 == 0 ? 1 : (Random.value < 0.54f ? 0 : 2);
             if (kind == 0) { SpawnCoinTrail(); return; }
             bool lantern = kind == 2 && Random.value < 0.5f;
             Sprite sprite = kind == 1 ? beastSprites[beasts] : (lantern ? lanternSprite : lionSprite);
@@ -262,7 +275,7 @@ namespace JinYanMaoYing
         private void SpawnCoinTrail()
         {
             if (coinSprite == null) return;
-            // 每组五枚金币形成低弧线、高弧线或台阶；三只脊兽正常收集时约有四组金币。
+            // 多条路线让玩家在避障和拾币之间做选择。
             float[][] paths = {
                 new[] { -230f, -190f, -135f, -190f, -230f },
                 new[] { -210f, -140f, -65f, -140f, -210f },
@@ -289,7 +302,7 @@ namespace JinYanMaoYing
         private void RefreshStatus()
         {
             if (statusText != null) statusText.text = "脊兽 " + beasts + "/3     金币 " + coins + "     得分 " + (coins * 20) + "     体力 " + health;
-            if (hintText != null) hintText.text = "空格 / ↑ 二段跳    ↓ 蹲下躲宫灯    收集三只脊兽";
+            if (hintText != null) hintText.text = "空格 / ↑ 二段跳    ↓ 蹲下躲宫灯    拾币可短暂向前冲刺";
         }
 
         private void Finish(bool win)
@@ -335,8 +348,8 @@ namespace JinYanMaoYing
             int score = coins * 20;
             if (rankImage != null)
             {
-                // 正常第三只脊兽约在第九次投放后可收集；约四组、二十枚金币可供收集。
-                rankImage.sprite = score >= 280 ? rankExcellent : score >= 160 ? rankFirst : rankSecond;
+                // 三只脊兽相隔约十二秒，按约二十组金币路线的常见拾取量评级。
+                rankImage.sprite = score >= 800 ? rankExcellent : score >= 400 ? rankFirst : rankSecond;
                 rankImage.gameObject.SetActive(true);
             }
             if (scoreText != null)
@@ -358,6 +371,8 @@ namespace JinYanMaoYing
                 yield return null;
             }
             group.blocksRaycasts = true;
+            yield return new WaitForSecondsRealtime(4f);
+            SceneTransition.Load(GameNavigator.WuMenKnowledge);
         }
 
         public void OpenSettings()
@@ -375,6 +390,7 @@ namespace JinYanMaoYing
 
         public void Restart() { SceneTransition.Load(GameNavigator.WuMen); }
         public void OpenMap() { SceneTransition.Load(GameNavigator.Map); }
+        public void QuitGame() { SceneTransition.Quit(); }
 
         private void OnDestroy()
         {
