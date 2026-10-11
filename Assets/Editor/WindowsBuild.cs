@@ -50,16 +50,16 @@ public static class WindowsBuild
 
         EditorSceneManager.OpenScene(scenes[3], OpenSceneMode.Single);
         QianQingExplorer explorer = UnityEngine.Object.FindObjectOfType<QianQingExplorer>();
-        if (explorer == null || explorer.rooms == null || explorer.rooms.Length != 3 ||
-            explorer.cat == null || explorer.mapNodes == null || explorer.mapNodes.Length != 3)
+        if (explorer == null || explorer.rooms == null || explorer.rooms.Length != 4 ||
+            explorer.cat == null || explorer.mapNodes == null || explorer.mapNodes.Length != 4 ||
+            explorer.quiz == null || explorer.quizAnswers == null || explorer.quizAnswers.Length != 3)
             throw new Exception("乾清宫关卡配置不完整");
         for (int i = 0; i < explorer.rooms.Length; i++)
         {
             QianQingRoom room = explorer.rooms[i];
-            if (room == null || room.relic == null || room.platforms == null || room.platforms.Length < 3)
+            if (room == null || (i < 3 && room.relic == null))
                 throw new Exception("乾清宫第 " + i + " 区配置不完整：room=" + (room != null) +
-                    " relic=" + (room != null && room.relic != null) +
-                    " platforms=" + (room == null || room.platforms == null ? -1 : room.platforms.Length));
+                    " relic=" + (room != null && room.relic != null));
         }
 
         EditorSceneManager.OpenScene(scenes[4], OpenSceneMode.Single);
@@ -77,7 +77,7 @@ public static class WindowsBuild
 
         // A fresh output directory prevents stale scene files from an earlier build
         // from being mixed with a newly generated player.
-        string output = Path.GetFullPath("Builds/WindowsRepaired2/CatGameRemake.exe");
+        string output = Path.GetFullPath("Builds/WindowsQianQingFinal2/CatGameRemake.exe");
         Directory.CreateDirectory(Path.GetDirectoryName(output));
         BuildPlayerOptions options = new BuildPlayerOptions {
             scenes = scenes,
