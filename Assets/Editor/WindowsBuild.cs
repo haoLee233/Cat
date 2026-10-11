@@ -18,7 +18,8 @@ public static class WindowsBuild
             "Assets/Scenes/午门追逐.unity",
             "Assets/Scenes/乾清宫.unity",
             "Assets/Scenes/保和殿水管.unity",
-            "Assets/Scenes/午门营造录.unity"
+            "Assets/Scenes/午门营造录.unity",
+            "Assets/Scenes/乾清宫营造录.unity"
         };
         foreach (string path in scenes)
         {
@@ -52,7 +53,8 @@ public static class WindowsBuild
         QianQingExplorer explorer = UnityEngine.Object.FindObjectOfType<QianQingExplorer>();
         if (explorer == null || explorer.rooms == null || explorer.rooms.Length != 4 ||
             explorer.cat == null || explorer.mapNodes == null || explorer.mapNodes.Length != 4 ||
-            explorer.quiz == null || explorer.quizAnswers == null || explorer.quizAnswers.Length != 3)
+            explorer.quiz == null || explorer.quizAnswers == null || explorer.quizAnswers.Length != 3 ||
+            explorer.introClip == null || explorer.introPlayer == null || explorer.videoOverlay == null || explorer.videoScreen == null)
             throw new Exception("乾清宫关卡配置不完整");
         for (int i = 0; i < explorer.rooms.Length; i++)
         {
@@ -61,6 +63,15 @@ public static class WindowsBuild
                 throw new Exception("乾清宫第 " + i + " 区配置不完整：room=" + (room != null) +
                     " relic=" + (room != null && room.relic != null));
         }
+        if (explorer.rooms[2].GroundAt(0f) != -353f || explorer.rooms[2].relic.anchoredPosition.y > -250f)
+            throw new Exception("东侧月台行走面或日晷仍位于石栏杆上");
+
+        Scene qianQingKnowledge = EditorSceneManager.OpenScene(scenes[6], OpenSceneMode.Single);
+        int educationPhotos = 0;
+        foreach (GameObject root in qianQingKnowledge.GetRootGameObjects())
+            foreach (Image image in root.GetComponentsInChildren<Image>(true))
+                if (image.name.Contains("照片") && image.sprite != null) educationPhotos++;
+        if (educationPhotos != 2) throw new Exception("乾清宫科普页缺少授权实景照片");
 
         EditorSceneManager.OpenScene(scenes[4], OpenSceneMode.Single);
         BaoHeDianPipes pipes = UnityEngine.Object.FindObjectOfType<BaoHeDianPipes>();
@@ -77,7 +88,7 @@ public static class WindowsBuild
 
         // A fresh output directory prevents stale scene files from an earlier build
         // from being mixed with a newly generated player.
-        string output = Path.GetFullPath("Builds/WindowsQianQingFinal2/CatGameRemake.exe");
+        string output = Path.GetFullPath("Builds/WindowsQianQingCGKnowledge/CatGameRemake.exe");
         Directory.CreateDirectory(Path.GetDirectoryName(output));
         BuildPlayerOptions options = new BuildPlayerOptions {
             scenes = scenes,
@@ -87,6 +98,7 @@ public static class WindowsBuild
         };
         BuildReport report = BuildPipeline.BuildPlayer(options);
         if (report.summary.result != BuildResult.Succeeded) throw new Exception("Windows 构建失败: " + report.summary.result);
+        File.Copy(Path.GetFullPath("CREDITS.md"), Path.Combine(Path.GetDirectoryName(output), "CREDITS.md"), true);
         Debug.Log("REMAKE_WINDOWS_BUILD_READY " + output + " bytes=" + report.summary.totalSize);
     }
 }

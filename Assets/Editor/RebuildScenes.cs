@@ -28,6 +28,7 @@ public static class RebuildScenes
         string qianQing = BuildQianQingGong();
         string baoHeDian = BuildBaoHeDian();
         string knowledge = BuildWuMenKnowledge();
+        string qianQingKnowledge = BuildQianQingKnowledge();
         EditorBuildSettings.scenes = new[]
         {
             new EditorBuildSettingsScene(cover, true),
@@ -36,12 +37,13 @@ public static class RebuildScenes
             new EditorBuildSettingsScene(qianQing, true),
             new EditorBuildSettingsScene(baoHeDian, true),
             new EditorBuildSettingsScene(knowledge, true),
+            new EditorBuildSettingsScene(qianQingKnowledge, true),
         };
         PlayerSettings.productName = "锦檐猫影：筑梦人";
         PlayerSettings.companyName = "锦檐猫影";
         AssetDatabase.SaveAssets();
         EditorSceneManager.OpenScene(cover);
-        Debug.Log("REMAKE_SCENES_READY " + cover + ", " + map + ", " + wuMen + ", " + qianQing + ", " + baoHeDian + ", " + knowledge);
+        Debug.Log("REMAKE_SCENES_READY " + cover + ", " + map + ", " + wuMen + ", " + qianQing + ", " + baoHeDian + ", " + knowledge + ", " + qianQingKnowledge);
     }
 
     private static void ConfigureArt()
@@ -382,6 +384,43 @@ public static class RebuildScenes
         return Save(scene, GameNavigator.WuMenKnowledge);
     }
 
+    private static string BuildQianQingKnowledge()
+    {
+        Scene scene = NewScene(GameNavigator.QianQingKnowledge);
+        Canvas canvas = MakeCanvas();
+        ColorPanel(canvas.transform, "宣纸黄底", new Vector2(1920f, 1080f), Vector2.zero,
+            new Color(0.93f, 0.84f, 0.62f));
+        ColorPanel(canvas.transform, "内层纸面", new Vector2(1800f, 950f), new Vector2(0f, -18f),
+            new Color(1f, 0.97f, 0.83f, 0.76f));
+        ColorPanel(canvas.transform, "朱砂标题线", new Vector2(1710f, 5f), new Vector2(0f, 350f),
+            new Color(0.56f, 0.20f, 0.16f));
+        Label(canvas.transform, "主题", "乾清宫营造录 · 殿宇与匠艺", 61,
+            new Vector2(1180f, 95f), new Vector2(-145f, 420f), new Color(0.28f, 0.13f, 0.09f));
+        GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
+        Button exit = ActionButton(canvas.transform, "退出科普", "退出", new Vector2(210f, 75f), new Vector2(790f, 422f));
+        UnityEventTools.AddPersistentListener(exit.onClick, nav.OpenMap);
+
+        Picture(canvas.transform, "乾清宫外景照片", "Assets/Art/QianQingGong/Education/QianQingExterior.jpg",
+            new Vector2(770f, 465f), new Vector2(-440f, 64f));
+        Picture(canvas.transform, "乾清宫内景照片", "Assets/Art/QianQingGong/Education/QianQingInterior.jpg",
+            new Vector2(770f, 465f), new Vector2(440f, 64f));
+        Label(canvas.transform, "外景图注", "乾清宫正面与汉白玉月台", 30,
+            new Vector2(760f, 56f), new Vector2(-440f, -205f), new Color(0.40f, 0.17f, 0.13f));
+        Label(canvas.transform, "内景图注", "殿内宝座与「正大光明」匾", 30,
+            new Vector2(760f, 56f), new Vector2(440f, -205f), new Color(0.40f, 0.17f, 0.13f));
+        Text exterior = Label(canvas.transform, "乾清宫介绍",
+            "乾清宫坐落在故宫内廷，是一座重檐庑殿顶宫殿。\n黄琉璃瓦与朱红梁柱相映，殿前设汉白玉月台。\n月台上的日晷、嘉量与铜鹤，诉说着匠人之器。",
+            30, new Vector2(780f, 180f), new Vector2(-440f, -330f), new Color(0.22f, 0.16f, 0.11f));
+        exterior.alignment = TextAnchor.UpperLeft;
+        Text interior = Label(canvas.transform, "殿内介绍",
+            "殿内宝座上方悬「正大光明」匾，空间以彩画、\n雕饰和木构营造出庄严的氛围。\n从一瓦一木到精密器物，都承载着工匠的手艺。",
+            30, new Vector2(780f, 180f), new Vector2(440f, -330f), new Color(0.22f, 0.16f, 0.11f));
+        interior.alignment = TextAnchor.UpperLeft;
+        Label(canvas.transform, "资料来源", "史料：故宫博物院  ·  摄影：江上清风1961、Vaiz Ha（CC BY；授权见随游戏 CREDITS.md）",
+            22, new Vector2(1680f, 42f), new Vector2(0f, -480f), new Color(0.37f, 0.26f, 0.18f));
+        return Save(scene, GameNavigator.QianQingKnowledge);
+    }
+
     private static string BuildQianQingGong()
     {
         Scene scene = NewScene(GameNavigator.QianQingGong);
@@ -392,7 +431,7 @@ public static class RebuildScenes
         string[] backgrounds = { "乾清宫殿外_新绘.png", "乾清宫丹陛_新绘.png", "乾清宫侧月台_新绘.png", "乾清宫殿内_新绘.png" };
         string[] names = { "乾清宫前庭", "丹陛高台", "东侧月台", "乾清宫正殿" };
         string[] relicNames = { "铜鹤", "嘉量", "日晷" };
-        Vector2[] relicPositions = { new Vector2(490f, -280f), new Vector2(650f, 90f), new Vector2(485f, -115f) };
+        Vector2[] relicPositions = { new Vector2(490f, -280f), new Vector2(650f, 90f), new Vector2(485f, -280f) };
         Texture2D relicSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(art + "乾清宫器物图鉴.png");
         if (relicSheet == null) throw new Exception("缺少乾清宫器物图鉴");
         for (int i = 0; i < 4; i++)
@@ -404,9 +443,9 @@ public static class RebuildScenes
             background.preserveAspect = false;
             background.color = new Color(0.88f, 0.86f, 0.81f, 1f);
             room.floorLeft = -353f;
-            room.floorRight = i == 1 ? 20f : i == 2 ? -160f : -353f;
-            room.rampStart = i == 1 ? -310f : i == 2 ? -950f : 0f;
-            room.rampEnd = i == 1 ? 500f : i == 2 ? -700f : 0f;
+            room.floorRight = i == 1 ? 20f : -353f;
+            room.rampStart = i == 1 ? -310f : 0f;
+            room.rampEnd = i == 1 ? 500f : 0f;
             if (i < 3)
             {
                 RectTransform relic = Rect(root, relicNames[i] + "可查阅器物", i == 2 ? new Vector2(170f, 174f) : new Vector2(145f, 145f), relicPositions[i]);
@@ -438,18 +477,18 @@ public static class RebuildScenes
             AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动3.png")
         };
         Image miniMap = Picture(canvas.transform, "左上角水墨小地图", "Assets/Art/WuMen/WM_Dialog_Box.png",
-            new Vector2(520f, 235f), new Vector2(-672f, 412f));
+            new Vector2(690f, 330f), new Vector2(-600f, 362f));
         miniMap.color = new Color(1f, 1f, 1f, 0.91f);
-        Label(canvas.transform, "小地图标题", "乾清宫 · 探索地图", 36, new Vector2(440f, 56f),
-            new Vector2(-672f, 480f), new Color(0.20f, 0.13f, 0.10f));
+        Label(canvas.transform, "小地图标题", "乾清宫 · 探索地图", 34, new Vector2(540f, 55f),
+            new Vector2(-600f, 461f), new Color(0.20f, 0.13f, 0.10f));
         game.mapNodes = new Image[4];
         for (int i = 0; i < 4; i++)
         {
-            float x = -845f + i * 118f;
+            float x = -825f + i * 150f;
             game.mapNodes[i] = ColorPanel(canvas.transform, "地图节点" + i, new Vector2(25f, 25f),
-                new Vector2(x, 415f), new Color(0.35f, 0.31f, 0.27f));
-            Label(canvas.transform, "节点名称" + i, new[] { "前庭", "丹陛", "月台", "正殿" }[i], 27,
-                new Vector2(138f, 50f), new Vector2(x, 370f), new Color(0.20f, 0.13f, 0.10f));
+                new Vector2(x, 385f), new Color(0.35f, 0.31f, 0.27f));
+            Label(canvas.transform, "节点名称" + i, new[] { "前庭", "丹陛", "月台", "正殿" }[i], 28,
+                new Vector2(130f, 45f), new Vector2(x, 328f), new Color(0.20f, 0.13f, 0.10f));
         }
         ColorPanel(canvas.transform, "顶部关卡底色", new Vector2(660f, 112f),
             new Vector2(192f, 465f), new Color(0.13f, 0.10f, 0.09f, 0.76f));
@@ -467,18 +506,20 @@ public static class RebuildScenes
         RectTransform quiz = Rect(canvas.transform, "器物查阅与工匠考验", new Vector2(1920f, 1080f), Vector2.zero);
         Image quizShade = quiz.gameObject.AddComponent<Image>();
         quizShade.color = new Color(0.08f, 0.06f, 0.05f, 0.66f);
-        Picture(quiz, "无字水墨卷轴", "Assets/Art/WuMen/WM_Dialog_Box.png", new Vector2(1210f, 620f), Vector2.zero);
-        game.quizTitle = Label(quiz, "查阅标题", "", 54, new Vector2(980f, 80f), new Vector2(0f, 205f), new Color(0.18f, 0.12f, 0.09f));
-        game.quizQuestion = Label(quiz, "器物问题", "", 39, new Vector2(970f, 100f), new Vector2(0f, 115f), new Color(0.22f, 0.15f, 0.11f));
+        Image quizScroll = Picture(quiz, "无字水墨卷轴", "Assets/Art/WuMen/WM_Dialog_Box.png", new Vector2(1480f, 820f), Vector2.zero);
+        quizScroll.preserveAspect = false;
+        game.quizTitle = Label(quiz, "查阅标题", "", 48, new Vector2(1080f, 68f), new Vector2(0f, 240f), new Color(0.18f, 0.12f, 0.09f));
+        game.quizQuestion = Label(quiz, "器物问题", "", 35, new Vector2(1100f, 118f), new Vector2(0f, 140f), new Color(0.22f, 0.15f, 0.11f));
         game.quizAnswers = new Text[3];
         for (int i = 0; i < 3; i++)
         {
-            Button answer = ActionButton(quiz, "答案" + i, "", new Vector2(650f, 67f), new Vector2(0f, 25f - i * 81f));
+            Button answer = ActionButton(quiz, "答案" + i, "", new Vector2(810f, 66f), new Vector2(0f, 35f - i * 86f));
             game.quizAnswers[i] = answer.GetComponentInChildren<Text>();
+            game.quizAnswers[i].fontSize = 38;
             UnityEventTools.AddIntPersistentListener(answer.onClick, game.Answer, i);
         }
-        game.quizFeedback = Label(quiz, "答题反馈", "", 31, new Vector2(860f, 55f), new Vector2(0f, -231f), new Color(0.40f, 0.21f, 0.16f));
-        Button closeQuiz = ActionButton(quiz, "收起查阅", "暂且收起", new Vector2(190f, 55f), new Vector2(495f, 265f));
+        game.quizFeedback = Label(quiz, "答题反馈", "", 30, new Vector2(1050f, 52f), new Vector2(0f, -258f), new Color(0.40f, 0.21f, 0.16f));
+        Button closeQuiz = ActionButton(quiz, "收起查阅", "暂且收起", new Vector2(190f, 55f), new Vector2(570f, 325f));
         UnityEventTools.AddPersistentListener(closeQuiz.onClick, game.CloseQuiz);
         game.quiz = quiz.gameObject;
         quiz.gameObject.SetActive(false);
@@ -489,13 +530,32 @@ public static class RebuildScenes
         Label(result, "通关标题", "乾清宫寻迹完成", 65, new Vector2(700f, 100f), new Vector2(0f, 88f), new Color(0.20f, 0.13f, 0.10f));
         Label(result, "器物说明", "铜鹤 · 嘉量 · 日晷\n三处器物已收入图鉴", 36,
             new Vector2(680f, 110f), new Vector2(0f, -20f), new Color(0.25f, 0.17f, 0.13f));
-        Button complete = ActionButton(result, "返回故宫地图", "返回故宫地图", new Vector2(310f, 72f), new Vector2(0f, -145f));
-        UnityEventTools.AddPersistentListener(complete.onClick, game.ReturnToMap);
+        Button complete = ActionButton(result, "了解乾清宫", "了解乾清宫", new Vector2(310f, 72f), new Vector2(0f, -145f));
+        UnityEventTools.AddPersistentListener(complete.onClick, game.OpenKnowledge);
         game.ending = result.gameObject;
         result.gameObject.SetActive(false);
         Image fadeImage = ColorPanel(canvas.transform, "区域切换渐隐", new Vector2(1920f, 1080f), Vector2.zero, Color.black);
         game.fade = fadeImage.gameObject.AddComponent<CanvasGroup>();
         fadeImage.raycastTarget = false;
+        RectTransform videoOverlay = Rect(canvas.transform, "乾清宫第二段CG", new Vector2(1920f, 1080f), Vector2.zero);
+        Image black = videoOverlay.gameObject.AddComponent<Image>();
+        black.color = Color.black;
+        black.raycastTarget = true;
+        RectTransform safeVideoFrame = Rect(videoOverlay, "完整视频安全画框", new Vector2(1520f, 850f), Vector2.zero);
+        RectTransform videoRect = Rect(safeVideoFrame, "视频画面", new Vector2(1520f, 850f), Vector2.zero);
+        RawImage raw = videoRect.gameObject.AddComponent<RawImage>();
+        raw.color = Color.white;
+        raw.raycastTarget = false;
+        AspectRatioFitter fit = videoRect.gameObject.AddComponent<AspectRatioFitter>();
+        fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        Button skip = ActionButton(videoOverlay, "跳过片头", "跳过片头", new Vector2(230f, 72f), new Vector2(805f, 460f));
+        UnityEventTools.AddPersistentListener(skip.onClick, game.SkipVideo);
+        game.videoOverlay = videoOverlay.gameObject;
+        game.videoScreen = raw;
+        VideoPlayer player = new GameObject("乾清宫CG播放器", typeof(VideoPlayer)).GetComponent<VideoPlayer>();
+        game.introPlayer = player;
+        game.introClip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_two_video.m4v");
+        if (game.introClip == null) throw new Exception("缺少乾清宫第二段片头 Scene_two_video.m4v");
         return Save(scene, GameNavigator.QianQingGong);
     }
 

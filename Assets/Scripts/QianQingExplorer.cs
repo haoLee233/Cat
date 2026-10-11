@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 namespace JinYanMaoYing
 {
@@ -21,6 +22,10 @@ namespace JinYanMaoYing
         public Text quizQuestion;
         public Text quizFeedback;
         public Text[] quizAnswers;
+        public GameObject videoOverlay;
+        public RawImage videoScreen;
+        public VideoPlayer introPlayer;
+        public VideoClip introClip;
 
         private readonly bool[] found = new bool[3];
         private readonly string[] roomNames = { "乾清宫前庭", "丹陛高台", "东侧月台", "乾清宫正殿" };
@@ -45,6 +50,8 @@ namespace JinYanMaoYing
         private float hintUntil;
         private float animationTime;
         private bool changing;
+        private bool introPlaying = true;
+        private RenderTexture videoTexture;
         private const float Floor = -353f;
         private const float HalfCat = 47f;
         private const float Gravity = 1500f;
@@ -57,11 +64,77 @@ namespace JinYanMaoYing
             cat.anchoredPosition = new Vector2(-760f, Floor + HalfCat);
             ShowRoom(0);
             SetHint("A/D 或方向键移动 · 空格二段跳 · 靠近器物按 E 查阅", 8f);
+            if (introClip == null || introPlayer == null || videoScreen == null || videoOverlay == null)
+            {
+                Debug.LogError("乾清宫第二段片头视频未配置");
+                introPlaying = false;
+                if (videoOverlay != null) videoOverlay.SetActive(false);
+                return;
+            }
+            int width = introClip.width > 0 ? Mathf.Clamp((int)introClip.width, 16, 4096) : 1920;
+            int height = introClip.height > 0 ? Mathf.Clamp((int)introClip.height, 16, 4096) : 1080;
+            videoTexture = new RenderTexture(width, height, 0);
+            videoTexture.Create();
+            videoScreen.texture = videoTexture;
+            AspectRatioFitter fit = videoScreen.GetComponent<AspectRatioFitter>();
+            if (fit != null) fit.aspectRatio = (float)width / height;
+            introPlayer.clip = introClip;
+            introPlayer.targetTexture = videoTexture;
+            introPlayer.renderMode = VideoRenderMode.RenderTexture;
+            introPlayer.aspectRatio = VideoAspectRatio.FitInside;
+            introPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
+            introPlayer.isLooping = false;
+            introPlayer.prepareCompleted += OnVideoPrepared;
+            introPlayer.loopPointReached += OnVideoFinished;
+            introPlayer.errorReceived += OnVideoError;
+            videoOverlay.SetActive(true);
+            introPlayer.Prepare();
+            StartCoroutine(VideoPreparationTimeout());
+        }
+
+        private IEnumerator VideoPreparationTimeout()
+        {
+            yield return new WaitForSecondsRealtime(12f);
+            if (introPlaying && !introPlayer.isPrepared)
+            {
+                Debug.LogError("乾清宫片头准备超时");
+                FinishVideo();
+            }
+        }
+
+        private void OnVideoPrepared(VideoPlayer player) { if (introPlaying) player.Play(); }
+        private void OnVideoFinished(VideoPlayer player) { FinishVideo(); }
+        private void OnVideoError(VideoPlayer player, string message)
+        {
+            Debug.LogError("乾清宫片头播放失败: " + message);
+            FinishVideo();
+        }
+        private void FinishVideo()
+        {
+            if (!introPlaying) return;
+            introPlaying = false;
+            if (introPlayer != null) introPlayer.Stop();
+            if (videoOverlay != null) videoOverlay.SetActive(false);
+        }
+        public void SkipVideo() { FinishVideo(); }
+        private void OnDestroy()
+        {
+            if (introPlayer != null)
+            {
+                introPlayer.prepareCompleted -= OnVideoPrepared;
+                introPlayer.loopPointReached -= OnVideoFinished;
+                introPlayer.errorReceived -= OnVideoError;
+            }
+            if (videoTexture != null)
+            {
+                videoTexture.Release();
+                Destroy(videoTexture);
+            }
         }
 
         private void Update()
         {
-            if (changing || quizIndex >= 0 || (ending != null && ending.activeSelf)) return;
+            if (introPlaying || changing || quizIndex >= 0 || (ending != null && ending.activeSelf)) return;
             float dt = Time.deltaTime;
             Vector2 old = cat.anchoredPosition;
             float input = Input.GetAxisRaw("Horizontal");
@@ -160,7 +233,16 @@ namespace JinYanMaoYing
             GameNavigator.QianQingGongCleared = true;
             if (ending != null) ending.SetActive(true);
             SetHint("三处乾清宫器物均已查阅。", 6f);
+            StartCoroutine(OpenKnowledgeAfterResult());
         }
+
+        private IEnumerator OpenKnowledgeAfterResult()
+        {
+            yield return new WaitForSecondsRealtime(4f);
+            OpenKnowledge();
+        }
+
+        public void OpenKnowledge() { SceneTransition.Load(GameNavigator.QianQingKnowledge); }
 
         public void ReturnToMap() { SceneTransition.Load(GameNavigator.Map); }
 
