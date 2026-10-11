@@ -16,6 +16,7 @@ public static class WindowsBuild
             "Assets/Scenes/封面.unity",
             "Assets/Scenes/故宫地图.unity",
             "Assets/Scenes/午门追逐.unity",
+            "Assets/Scenes/乾清宫.unity",
             "Assets/Scenes/保和殿水管.unity",
             "Assets/Scenes/午门营造录.unity"
         };
@@ -48,6 +49,20 @@ public static class WindowsBuild
         foreach (Sprite frame in runner.runFrames) if (frame == null) throw new Exception("黑猫跑动帧丢失");
 
         EditorSceneManager.OpenScene(scenes[3], OpenSceneMode.Single);
+        QianQingExplorer explorer = UnityEngine.Object.FindObjectOfType<QianQingExplorer>();
+        if (explorer == null || explorer.rooms == null || explorer.rooms.Length != 3 ||
+            explorer.cat == null || explorer.mapNodes == null || explorer.mapNodes.Length != 3)
+            throw new Exception("乾清宫关卡配置不完整");
+        for (int i = 0; i < explorer.rooms.Length; i++)
+        {
+            QianQingRoom room = explorer.rooms[i];
+            if (room == null || room.relic == null || room.platforms == null || room.platforms.Length < 3)
+                throw new Exception("乾清宫第 " + i + " 区配置不完整：room=" + (room != null) +
+                    " relic=" + (room != null && room.relic != null) +
+                    " platforms=" + (room == null || room.platforms == null ? -1 : room.platforms.Length));
+        }
+
+        EditorSceneManager.OpenScene(scenes[4], OpenSceneMode.Single);
         BaoHeDianPipes pipes = UnityEngine.Object.FindObjectOfType<BaoHeDianPipes>();
         if (pipes == null || pipes.tiles == null || pipes.tiles.Length != 25 || pipes.timerText == null)
             throw new Exception("保和殿水管关卡配置不完整");
