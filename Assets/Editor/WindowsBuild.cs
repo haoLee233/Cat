@@ -75,7 +75,9 @@ public static class WindowsBuild
             if (!hasSprite) throw new Exception("保和殿水管图片引用丢失: " + tile.name);
         }
 
-        string output = Path.GetFullPath("Builds/Windows/锦檐猫影：筑梦人.exe");
+        // A fresh output directory prevents stale scene files from an earlier build
+        // from being mixed with a newly generated player.
+        string output = Path.GetFullPath("Builds/WindowsRepaired2/CatGameRemake.exe");
         Directory.CreateDirectory(Path.GetDirectoryName(output));
         BuildPlayerOptions options = new BuildPlayerOptions {
             scenes = scenes,
