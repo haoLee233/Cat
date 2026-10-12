@@ -21,7 +21,7 @@ namespace JinYanMaoYing
             if (resultPanel != null) resultPanel.SetActive(false);
             if (tiles == null || tiles.Length != 25)
             {
-                Debug.LogError("保和殿必须配置 25 块管道");
+                Debug.LogError("保和殿必须配置 25 块营造图拼块");
                 enabled = false;
                 return;
             }
@@ -71,7 +71,7 @@ namespace JinYanMaoYing
             if (won) GameNavigator.BaoHeDianCleared = true;
             foreach (Button tile in tiles) if (tile != null) tile.interactable = false;
             if (resultPanel != null) resultPanel.SetActive(true);
-            if (resultText != null) resultText.text = won ? "水路接通\n保和殿已通关" : "时间已到\n再试一次吧";
+            if (resultText != null) resultText.text = won ? "殿宇营造图已复原\n保和殿重新有了颜色" : "时间已到\n再试一次吧";
         }
 
         public void Restart() { SceneTransition.Load(GameNavigator.BaoHeDian); }

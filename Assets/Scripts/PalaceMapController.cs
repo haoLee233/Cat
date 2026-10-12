@@ -9,6 +9,15 @@ namespace JinYanMaoYing
         public GameObject[] colorLayers;
         public GameObject lockedPrompt;
         public Text promptText;
+        public Text missionText;
+
+        private readonly string[] missions = {
+            "墨宝拾起褪色的故宫画卷。先到午门找回屋脊脊兽，让城门重新上色。",
+            "午门已复色。去乾清宫观察三件器物，找回匠人的尺度与时间。",
+            "乾清宫已复色。到保和殿复原殿宇营造图，让阶陛与屋檐重现。",
+            "保和殿已复色。去太和殿按建筑层次落下最后一笔。",
+            "四处宫殿已经复色。回看这幅画卷，也回看匠人的故事。"
+        };
 
         private void Start()
         {
@@ -17,6 +26,9 @@ namespace JinYanMaoYing
             colorLayers[1].SetActive(GameNavigator.QianQingGongCleared);
             colorLayers[2].SetActive(GameNavigator.BaoHeDianCleared);
             colorLayers[3].SetActive(GameNavigator.TaiHeDianCleared);
+            int progress = GameNavigator.TaiHeDianCleared ? 4 : GameNavigator.BaoHeDianCleared ? 3 :
+                GameNavigator.QianQingGongCleared ? 2 : GameNavigator.WuMenCleared ? 1 : 0;
+            if (missionText != null) missionText.text = missions[progress];
             if (lockedPrompt != null) lockedPrompt.SetActive(false);
         }
 

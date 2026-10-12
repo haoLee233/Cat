@@ -36,6 +36,11 @@ namespace JinYanMaoYing
             "日晷依靠什么来测定时刻？",
             "工匠之器各司其职：按「量器、计时器、吉祥陈设」排列，顺序应为？"
         };
+        private readonly string[] observations = {
+            "先看前庭：铜鹤立在殿前石地，长颈展翼，是匠人制作的吉祥陈设。记住它的造型，再辨认用途。",
+            "先看丹陛：嘉量是一件带量筒的标准器，安放在殿前高台。观察器身，再想想它用来统一什么。",
+            "先看东侧月台：日晷立在石地基座上，晷针投影随日光而变。观察晷面，再判断它怎样计时。"
+        };
         private readonly string[,] answers = {
             { "长寿祥瑞", "测量雨水", "传递书信" },
             { "计时器", "乐器", "容量量器" },
@@ -45,6 +50,7 @@ namespace JinYanMaoYing
         private readonly int[] correctChoices = { 0, 2, 1, 2 };
         private int currentRoom;
         private int quizIndex = -1;
+        private bool observing;
         private int jumps;
         private float verticalSpeed;
         private float hintUntil;
@@ -199,19 +205,31 @@ namespace JinYanMaoYing
         private void OpenQuiz(int index)
         {
             quizIndex = index;
+            observing = index < 3;
             quiz.SetActive(true);
-            quizTitle.text = index == 3 ? "工匠识物 · 通关考验" : "查阅「" + relicNames[index] + "」";
-            quizQuestion.text = questions[index];
-            quizFeedback.text = "选出正确答案，方可收入图鉴。";
-            for (int i = 0; i < 3; i++) quizAnswers[i].text = answers[index, i];
+            ShowQuizStep();
+        }
+
+        private void ShowQuizStep()
+        {
+            quizTitle.text = quizIndex == 3 ? "工匠识物 · 通关考验" : "查阅「" + relicNames[quizIndex] + "」";
+            quizQuestion.text = observing ? observations[quizIndex] : questions[quizIndex];
+            quizFeedback.text = observing ? "先观察场景与器物，再进入辨识。" : "选出正确答案，方可收入图鉴。";
+            for (int i = 0; i < 3; i++)
+            {
+                quizAnswers[i].transform.parent.gameObject.SetActive(!observing || i == 0);
+                quizAnswers[i].text = observing ? "我看清了，继续辨识" : answers[quizIndex, i];
+            }
         }
 
         public void Answer(int choice)
         {
             if (quizIndex < 0) return;
+            if (observing) { observing = false; ShowQuizStep(); return; }
             if (choice != correctChoices[quizIndex]) { quizFeedback.text = "再观察器物的用途，重新作答。"; return; }
             int solved = quizIndex;
             quizIndex = -1;
+            observing = false;
             quiz.SetActive(false);
             if (solved == 3) { Finish(); return; }
             found[solved] = true;
@@ -223,6 +241,7 @@ namespace JinYanMaoYing
         public void CloseQuiz()
         {
             quizIndex = -1;
+            observing = false;
             quiz.SetActive(false);
         }
 
@@ -232,7 +251,7 @@ namespace JinYanMaoYing
         {
             GameNavigator.QianQingGongCleared = true;
             if (ending != null) ending.SetActive(true);
-            SetHint("三处乾清宫器物均已查阅。", 6f);
+            SetHint("三处器物已查阅；墨宝找回了匠人的尺度与时间，乾清宫重现色彩。", 6f);
             StartCoroutine(OpenKnowledgeAfterResult());
         }
 

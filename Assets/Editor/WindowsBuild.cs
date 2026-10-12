@@ -78,14 +78,14 @@ public static class WindowsBuild
         EditorSceneManager.OpenScene(scenes[4], OpenSceneMode.Single);
         BaoHeDianPipes pipes = UnityEngine.Object.FindObjectOfType<BaoHeDianPipes>();
         if (pipes == null || pipes.tiles == null || pipes.tiles.Length != 25 || pipes.timerText == null)
-            throw new Exception("保和殿水管关卡配置不完整");
+            throw new Exception("保和殿营造图关卡配置不完整");
         foreach (Button tile in pipes.tiles)
         {
-            if (tile == null) throw new Exception("保和殿水管按钮丢失");
-            bool hasSprite = false;
-            foreach (Image image in tile.GetComponentsInChildren<Image>(true))
-                if (image.sprite != null) hasSprite = true;
-            if (!hasSprite) throw new Exception("保和殿水管图片引用丢失: " + tile.name);
+            if (tile == null) throw new Exception("保和殿营造图拼块按钮丢失");
+            bool hasArt = false;
+            foreach (RawImage image in tile.GetComponentsInChildren<RawImage>(true))
+                if (image.texture != null) hasArt = true;
+            if (!hasArt) throw new Exception("保和殿营造图拼块引用丢失: " + tile.name);
         }
 
         EditorSceneManager.OpenScene(scenes[7], OpenSceneMode.Single);

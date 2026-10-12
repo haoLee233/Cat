@@ -189,6 +189,8 @@ public static class RebuildScenes
         GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
         Button start = ActionButton(canvas.transform, "开始游戏", "点击开始旅程", new Vector2(600f, 92f), new Vector2(0f, -420f));
         UnityEventTools.AddPersistentListener(start.onClick, nav.OpenMap);
+        Label(canvas.transform, "旅程缘起", "墨宝拾起一幅褪色的故宫画卷，沿着匠人的线索找回四处色彩。", 30,
+            new Vector2(1300f, 70f), new Vector2(0f, -320f), new Color(0.18f, 0.13f, 0.10f));
         Button quit = ActionButton(canvas.transform, "退出游戏", "退出游戏", new Vector2(235f, 72f), new Vector2(810f, 460f));
         UnityEventTools.AddPersistentListener(quit.onClick, nav.Quit);
         return Save(scene, GameNavigator.Cover);
@@ -217,6 +219,10 @@ public static class RebuildScenes
         UnityEventTools.AddPersistentListener(back.onClick, nav.OpenCover);
         Button quit = ActionButton(canvas.transform, "退出游戏", "退出游戏", new Vector2(260f, 76f), new Vector2(805f, 438f));
         UnityEventTools.AddPersistentListener(quit.onClick, nav.Quit);
+        ColorPanel(canvas.transform, "任务卷轴底色", new Vector2(1660f, 100f), new Vector2(0f, -467f),
+            new Color(0.96f, 0.90f, 0.78f, 0.88f));
+        controller.missionText = Label(canvas.transform, "墨宝的任务", "", 30,
+            new Vector2(1570f, 86f), new Vector2(0f, -467f), new Color(0.19f, 0.13f, 0.10f));
 
         RectTransform modal = Rect(canvas.transform, "未解锁提示", new Vector2(1920f, 1080f), Vector2.zero);
         Image dim = modal.gameObject.AddComponent<Image>();
@@ -567,31 +573,50 @@ public static class RebuildScenes
     {
         Scene scene = NewScene(GameNavigator.BaoHeDian);
         Canvas canvas = MakeCanvas();
-        Picture(canvas.transform, "水管背景", "Assets/Art/BaoHeDian/水管背景.png", new Vector2(1920f, 1080f), Vector2.zero);
-        ColorPanel(canvas.transform, "游戏区底色", new Vector2(850f, 850f), new Vector2(0f, -12f), new Color(0.96f, 0.92f, 0.83f, 0.90f));
+        const string artPath = "Assets/Art/BaoHeDian/拼图背景.png";
+        Picture(canvas.transform, "保和殿阶陛与屋檐", artPath, new Vector2(1920f, 1080f), Vector2.zero);
+        ColorPanel(canvas.transform, "拼合区宣纸底色", new Vector2(690f, 690f), new Vector2(-360f, -12f),
+            new Color(0.96f, 0.92f, 0.83f, 0.94f));
         BaoHeDianPipes game = new GameObject("保和殿关卡控制", typeof(BaoHeDianPipes)).GetComponent<BaoHeDianPipes>();
+        game.timeLimit = 420f;
         game.tiles = new Button[25];
+        Texture2D puzzleArt = AssetDatabase.LoadAssetAtPath<Texture2D>(artPath);
+        if (puzzleArt == null) throw new Exception("缺少保和殿营造图");
         for (int row = 0; row < 5; row++)
         {
             for (int col = 0; col < 5; col++)
             {
                 int number = (row + 1) * 10 + col + 1;
                 int index = row * 5 + col;
-                Vector2 position = new Vector2((col - 2) * 158f, (2 - row) * 158f - 12f);
-                RectTransform tile = Rect(canvas.transform, "管道" + number, new Vector2(150f, 150f), position);
+                Vector2 position = new Vector2(-360f + (col - 2) * 130f, (2 - row) * 130f - 12f);
+                RectTransform tile = Rect(canvas.transform, "营造图拼块" + number, new Vector2(126f, 126f), position);
                 Image background = tile.gameObject.AddComponent<Image>();
-                background.color = new Color(0.13f, 0.12f, 0.10f, 1f);
+                background.color = new Color(0.21f, 0.17f, 0.14f, 1f);
                 Button button = tile.gameObject.AddComponent<Button>();
                 button.targetGraphic = background;
-                Image art = Picture(tile, "图片", "Assets/Art/BaoHeDian/拼图/" + number + ".jpg", new Vector2(144f, 144f), Vector2.zero);
-                art.preserveAspect = false;
+                RectTransform artRect = Rect(tile, "阶陛屋檐画面", new Vector2(120f, 120f), Vector2.zero);
+                RawImage art = artRect.gameObject.AddComponent<RawImage>();
+                art.texture = puzzleArt;
+                // The source is 16:9; its central square keeps individual rotating tiles undistorted.
+                art.uvRect = new Rect(0.21875f + col * 0.1125f, (4 - row) * 0.2f, 0.1125f, 0.2f);
+                art.raycastTarget = false;
                 game.tiles[index] = button;
             }
         }
+        ColorPanel(canvas.transform, "参考图底色", new Vector2(440f, 540f), new Vector2(535f, -22f),
+            new Color(0.96f, 0.92f, 0.83f, 0.96f));
+        Label(canvas.transform, "参考图标题", "观察原图：屋檐、殿门与阶陛", 31,
+            new Vector2(410f, 63f), new Vector2(535f, 207f), new Color(0.22f, 0.15f, 0.12f));
+        RectTransform reference = Rect(canvas.transform, "营造图参考", new Vector2(370f, 370f), new Vector2(535f, -30f));
+        RawImage referenceArt = reference.gameObject.AddComponent<RawImage>();
+        referenceArt.texture = puzzleArt;
+        referenceArt.uvRect = new Rect(0.21875f, 0f, 0.5625f, 1f);
+        referenceArt.raycastTarget = false;
         ColorPanel(canvas.transform, "顶部底色", new Vector2(1920f, 122f), new Vector2(0f, 478f), new Color(0.07f, 0.07f, 0.07f, 0.69f));
-        Label(canvas.transform, "关卡名", "保和殿 · 水管谜题", 53, new Vector2(630f, 92f), new Vector2(-520f, 478f), Color.white);
-        game.timerText = Label(canvas.transform, "倒计时", "剩余时间 05:00", 48, new Vector2(460f, 90f), new Vector2(355f, 478f), Color.white);
-        Label(canvas.transform, "玩法说明", "点击管道旋转九十度，在五分钟内拼好整幅水路图", 31, new Vector2(1100f, 58f), new Vector2(0f, -486f), new Color(0.18f, 0.12f, 0.12f));
+        Label(canvas.transform, "关卡名", "保和殿 · 营造图复原", 49, new Vector2(700f, 92f), new Vector2(-485f, 478f), Color.white);
+        game.timerText = Label(canvas.transform, "倒计时", "剩余时间 07:00", 44, new Vector2(460f, 90f), new Vector2(380f, 478f), Color.white);
+        Label(canvas.transform, "玩法说明", "墨宝要找回阶陛与屋檐的线索。对照原图，点击拼块旋转九十度。", 29,
+            new Vector2(1510f, 58f), new Vector2(0f, -486f), new Color(0.18f, 0.12f, 0.12f));
         Button back = ActionButton(canvas.transform, "返回地图", "返回地图", new Vector2(250f, 76f), new Vector2(-820f, 478f));
         UnityEventTools.AddPersistentListener(back.onClick, game.OpenMap);
 
