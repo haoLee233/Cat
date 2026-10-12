@@ -6,42 +6,35 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/level0.unity
-    guid: b24d4fd93f9961a4ba1024c1481b698f
+    path: "Assets/Scenes/\u5C01\u9762.unity"
+    guid: 27c9f516b471a0a439a068a88068fcf3
   - enabled: 1
-    path: Assets/Scenes/level1.unity
-    guid: 9fdbad4ba8eae8947bd6af3213849bba
+    path: "Assets/Scenes/\u6545\u5BAB\u5730\u56FE.unity"
+    guid: 5047725f35a54bb41bb13082a2847466
   - enabled: 1
-    path: Assets/Scenes/level2.unity
-    guid: 8cbb4f61ee4b6e447a1d26bfefac2554
+    path: "Assets/Scenes/\u5348\u95E8\u8FFD\u9010.unity"
+    guid: 2172dadfd9b685942a71875c7c4c9bf5
   - enabled: 1
-    path: Assets/Scenes/level3.unity
-    guid: aa96564f5cd3a834c912a7cbbaf37f40
+    path: "Assets/Scenes/\u4E7E\u6E05\u5BAB.unity"
+    guid: 8d84ca997d0da544f802f8ca78d96638
   - enabled: 1
-    path: Assets/Scenes/level4.unity
-    guid: de424eb47eadfda42af07dd642961a8a
+    path: "Assets/Scenes/\u4FDD\u548C\u6BBF\u6C34\u7BA1.unity"
+    guid: 7446f8dbd5b885947a6a70b1d70c4a89
   - enabled: 1
-    path: Assets/Scenes/level5.unity
-    guid: 0ce386883fab8a24d9b7881ede94f1b9
+    path: "Assets/Scenes/\u5348\u95E8\u8425\u9020\u5F55.unity"
+    guid: 1bc5896a5cdb7a14fad316e70c04aa90
   - enabled: 1
-    path: Assets/Scenes/level6.unity
-    guid: 23cc6628b661e084b82bdf53589cd15b
-  - enabled: 1
-    path: Assets/Scenes/level7.unity
-    guid: aca7a9f461438364f89247f36c159eab
-  - enabled: 1
-    path: Assets/Scenes/level8.unity
-    guid: bdfb5cabcf45b3b4cb1ee90e4404863b
-  - enabled: 1
-    path: Assets/Scenes/level9.unity
-    guid: 72f6fe4ae4c13d2409374b25ffb276cf
-  - enabled: 1
-    path: Assets/Scenes/level10.unity
-    guid: ffad757373e501d4d9b4243d8b01d2f7
-  - enabled: 1
-    path: Assets/Scenes/level11.unity
-    guid: 5242c4547d108884489ccbb6cb6363fc
-  - enabled: 1
-    path: Assets/Scenes/level12.unity
-    guid: 07910d103b6684a4ebf02f1a425b8a22
+    path: "Assets/Scenes/\u4E7E\u6E05\u5BAB\u8425\u9020\u5F55.unity"
+    guid: 0f199d0c7a5ff1644a9bffc7e1c4c8c4
+  m_BuildProfiles: []
   m_configObjects: {}
+  m_SlimFeaturesWeixinMiniGame:
+    ACLDecompression: 0
+    AllocateOverhead: 1
+    DecompressASTC: 0
+    DecompressDXT: 0
+    DecompressETC: 1
+    FreeTypeSfntPng: 1
+    LightProbe: 2
+    RootMotion: 0
+    UseStringInternPool: 2
