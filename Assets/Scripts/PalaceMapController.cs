@@ -40,19 +40,13 @@ namespace JinYanMaoYing
                 case 0: SceneTransition.Load(GameNavigator.WuMen); break;
                 case 1: SceneTransition.Load(GameNavigator.QianQingGong); break;
                 case 2: SceneTransition.Load(GameNavigator.BaoHeDian); break;
-                case 3: ShowUnavailable(); break;
+                case 3: SceneTransition.Load(GameNavigator.TaiHeDian); break;
             }
         }
 
         public void ShowLocked()
         {
             if (promptText != null) promptText.text = "当前关卡未解锁，\n请完成所有前置关卡再来挑战吧！";
-            if (lockedPrompt != null) lockedPrompt.SetActive(true);
-        }
-
-        private void ShowUnavailable()
-        {
-            if (promptText != null) promptText.text = "太和殿关卡正在制作中，\n后续版本开放。";
             if (lockedPrompt != null) lockedPrompt.SetActive(true);
         }
 

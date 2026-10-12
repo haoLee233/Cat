@@ -19,7 +19,9 @@ public static class WindowsBuild
             "Assets/Scenes/乾清宫.unity",
             "Assets/Scenes/保和殿水管.unity",
             "Assets/Scenes/午门营造录.unity",
-            "Assets/Scenes/乾清宫营造录.unity"
+            "Assets/Scenes/乾清宫营造录.unity",
+            "Assets/Scenes/太和殿.unity",
+            "Assets/Scenes/终章.unity"
         };
         foreach (string path in scenes)
         {
@@ -86,9 +88,15 @@ public static class WindowsBuild
             if (!hasSprite) throw new Exception("保和殿水管图片引用丢失: " + tile.name);
         }
 
+        EditorSceneManager.OpenScene(scenes[7], OpenSceneMode.Single);
+        TaiHeFinale finale = UnityEngine.Object.FindObjectOfType<TaiHeFinale>();
+        if (finale == null || finale.parts == null || finale.parts.Length != 3 ||
+            finale.instruction == null || finale.feedback == null || finale.completionPanel == null)
+            throw new Exception("太和殿终章互动配置不完整");
+
         // A fresh output directory prevents stale scene files from an earlier build
         // from being mixed with a newly generated player.
-        string output = Path.GetFullPath("Builds/WindowsQianQingCGKnowledge/CatGameRemake.exe");
+        string output = Path.GetFullPath("Builds/WindowsFirstPlayable/JinYanMaoYing.exe");
         Directory.CreateDirectory(Path.GetDirectoryName(output));
         BuildPlayerOptions options = new BuildPlayerOptions {
             scenes = scenes,

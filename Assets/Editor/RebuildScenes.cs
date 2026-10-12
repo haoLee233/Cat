@@ -29,6 +29,8 @@ public static class RebuildScenes
         string baoHeDian = BuildBaoHeDian();
         string knowledge = BuildWuMenKnowledge();
         string qianQingKnowledge = BuildQianQingKnowledge();
+        string taiHe = BuildTaiHeDian();
+        string ending = BuildEnding();
         EditorBuildSettings.scenes = new[]
         {
             new EditorBuildSettingsScene(cover, true),
@@ -38,12 +40,14 @@ public static class RebuildScenes
             new EditorBuildSettingsScene(baoHeDian, true),
             new EditorBuildSettingsScene(knowledge, true),
             new EditorBuildSettingsScene(qianQingKnowledge, true),
+            new EditorBuildSettingsScene(taiHe, true),
+            new EditorBuildSettingsScene(ending, true),
         };
         PlayerSettings.productName = "锦檐猫影：筑梦人";
         PlayerSettings.companyName = "锦檐猫影";
         AssetDatabase.SaveAssets();
         EditorSceneManager.OpenScene(cover);
-        Debug.Log("REMAKE_SCENES_READY " + cover + ", " + map + ", " + wuMen + ", " + qianQing + ", " + baoHeDian + ", " + knowledge + ", " + qianQingKnowledge);
+        Debug.Log("REMAKE_SCENES_READY " + cover + ", " + map + ", " + wuMen + ", " + qianQing + ", " + baoHeDian + ", " + knowledge + ", " + qianQingKnowledge + ", " + taiHe + ", " + ending);
     }
 
     private static void ConfigureArt()
@@ -601,5 +605,89 @@ public static class RebuildScenes
         UnityEventTools.AddPersistentListener(retry.onClick, game.Restart);
         UnityEventTools.AddPersistentListener(toMap.onClick, game.OpenMap);
         return Save(scene, GameNavigator.BaoHeDian);
+    }
+
+    private static string BuildTaiHeDian()
+    {
+        Scene scene = NewScene(GameNavigator.TaiHeDian);
+        Canvas canvas = MakeCanvas();
+        Image background = Picture(canvas.transform, "太和殿水墨屋脊",
+            "Assets/Art/TaiHeDian/太和殿水墨屋脊.jpg", new Vector2(1920f, 1080f), Vector2.zero);
+        background.preserveAspect = false;
+        ColorPanel(canvas.transform, "宣纸透层", new Vector2(1920f, 1080f), Vector2.zero,
+            new Color(0.88f, 0.82f, 0.68f, 0.18f));
+        Label(canvas.transform, "终章标题", "太和殿 · 最后一笔", 64,
+            new Vector2(900f, 100f), new Vector2(0f, 448f), new Color(0.20f, 0.13f, 0.11f));
+        TaiHeFinale game = new GameObject("太和殿终章控制", typeof(TaiHeFinale)).GetComponent<TaiHeFinale>();
+        Button back = ActionButton(canvas.transform, "返回地图", "返回地图", new Vector2(235f, 74f), new Vector2(805f, 450f));
+        UnityEventTools.AddPersistentListener(back.onClick, game.OpenMap);
+
+        Image scroll = Picture(canvas.transform, "营造卷轴", "Assets/Art/WuMen/WM_Dialog_Box.png",
+            new Vector2(1330f, 695f), new Vector2(0f, -32f));
+        scroll.preserveAspect = false;
+        game.progress = Label(canvas.transform, "复原进度", "复原 0/3", 39,
+            new Vector2(400f, 62f), new Vector2(0f, 238f), new Color(0.43f, 0.22f, 0.17f));
+        game.instruction = Label(canvas.transform, "复原线索", "", 42,
+            new Vector2(1040f, 135f), new Vector2(0f, 133f), new Color(0.20f, 0.13f, 0.10f));
+        game.parts = new Button[3];
+        string[] partNames = { "屋脊", "台基", "斗拱" };
+        for (int i = 0; i < 3; i++)
+        {
+            Button part = ActionButton(canvas.transform, "构件" + partNames[i], partNames[i],
+                new Vector2(280f, 105f), new Vector2((i - 1) * 345f, -48f));
+            part.GetComponentInChildren<Text>().fontSize = 43;
+            UnityEventTools.AddIntPersistentListener(part.onClick, game.SelectPart, i);
+            game.parts[i] = part;
+        }
+        game.feedback = Label(canvas.transform, "操作反馈", "", 35,
+            new Vector2(1050f, 100f), new Vector2(0f, -186f), new Color(0.50f, 0.20f, 0.15f));
+        Label(canvas.transform, "玩法说明", "观察建筑，从下到上找回失去的三处色彩。", 31,
+            new Vector2(1100f, 65f), new Vector2(0f, -456f), new Color(0.20f, 0.13f, 0.11f));
+
+        RectTransform complete = Rect(canvas.transform, "终章完成", new Vector2(1920f, 1080f), Vector2.zero);
+        Image dim = complete.gameObject.AddComponent<Image>();
+        dim.color = new Color(0.07f, 0.06f, 0.05f, 0.70f);
+        dim.raycastTarget = true;
+        Image completedScroll = Picture(complete, "完成卷轴", "Assets/Art/WuMen/WM_Dialog_Box.png",
+            new Vector2(1090f, 575f), Vector2.zero);
+        completedScroll.preserveAspect = false;
+        Label(complete, "完成标题", "太和殿重现光彩", 65,
+            new Vector2(820f, 100f), new Vector2(0f, 115f), new Color(0.19f, 0.12f, 0.09f));
+        Label(complete, "完成说明", "墨宝走过四座宫殿，最后一笔已落下。\n回到故宫，看看这段旅程的结果。", 36,
+            new Vector2(820f, 150f), new Vector2(0f, 5f), new Color(0.25f, 0.17f, 0.13f));
+        Button ending = ActionButton(complete, "观看结局", "观看结局", new Vector2(280f, 82f), new Vector2(-160f, -150f));
+        Button returnMap = ActionButton(complete, "完成后返回地图", "返回地图", new Vector2(280f, 82f), new Vector2(160f, -150f));
+        UnityEventTools.AddPersistentListener(ending.onClick, game.OpenEnding);
+        UnityEventTools.AddPersistentListener(returnMap.onClick, game.OpenMap);
+        game.completionPanel = complete.gameObject;
+        complete.gameObject.SetActive(false);
+        return Save(scene, GameNavigator.TaiHeDian);
+    }
+
+    private static string BuildEnding()
+    {
+        Scene scene = NewScene(GameNavigator.Ending);
+        Canvas canvas = MakeCanvas();
+        Image map = Picture(canvas.transform, "完整复色故宫地图",
+            "Assets/Art/主地图/地图/地图_副本.png", new Vector2(1920f, 1080f), Vector2.zero);
+        map.preserveAspect = false;
+        ColorPanel(canvas.transform, "阅读遮罩", new Vector2(1920f, 1080f), Vector2.zero,
+            new Color(0.08f, 0.06f, 0.04f, 0.44f));
+        Image scroll = Picture(canvas.transform, "结局卷轴", "Assets/Art/WuMen/WM_Dialog_Box.png",
+            new Vector2(1220f, 790f), Vector2.zero);
+        scroll.preserveAspect = false;
+        Label(canvas.transform, "结局标题", "故宫重新有了颜色", 68,
+            new Vector2(970f, 110f), new Vector2(0f, 255f), new Color(0.22f, 0.13f, 0.10f));
+        Label(canvas.transform, "旅程记录", "午门 · 乾清宫 · 保和殿 · 太和殿", 41,
+            new Vector2(1030f, 80f), new Vector2(0f, 125f), new Color(0.48f, 0.22f, 0.16f));
+        Label(canvas.transform, "结局正文",
+            "四处足迹，将失落的色彩带回宫阙。\n墨宝的故宫寻迹之旅，到这里告一段落。\n谢谢你与我们一同看见匠人的心意。",
+            42, new Vector2(1000f, 230f), new Vector2(0f, -15f), new Color(0.22f, 0.15f, 0.11f));
+        GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
+        Button toMap = ActionButton(canvas.transform, "再看故宫地图", "返回故宫地图", new Vector2(335f, 82f), new Vector2(-190f, -265f));
+        Button toCover = ActionButton(canvas.transform, "返回封面", "返回封面", new Vector2(285f, 82f), new Vector2(190f, -265f));
+        UnityEventTools.AddPersistentListener(toMap.onClick, nav.OpenMap);
+        UnityEventTools.AddPersistentListener(toCover.onClick, nav.OpenCover);
+        return Save(scene, GameNavigator.Ending);
     }
 }
