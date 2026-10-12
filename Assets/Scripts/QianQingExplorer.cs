@@ -11,6 +11,7 @@ namespace JinYanMaoYing
         public RectTransform cat;
         public Image catImage;
         public Sprite[] runFrames;
+        public Sprite idleSprite;
         public Text roomTitle;
         public Text status;
         public Text hint;
@@ -55,6 +56,11 @@ namespace JinYanMaoYing
         private float verticalSpeed;
         private float hintUntil;
         private float animationTime;
+        private float idleTime;
+        private float lastDirectionTapTime = -10f;
+        private int lastTapDirection;
+        private int facing = 1;
+        private bool sprinting;
         private bool changing;
         private bool introPlaying = true;
         private RenderTexture videoTexture;
@@ -68,8 +74,9 @@ namespace JinYanMaoYing
             if (quiz != null) quiz.SetActive(false);
             if (fade != null) { fade.alpha = 0f; fade.blocksRaycasts = false; }
             cat.anchoredPosition = new Vector2(-760f, Floor + HalfCat);
+            if (catImage != null) catImage.preserveAspect = true;
             ShowRoom(0);
-            SetHint("A/D 或方向键移动 · 空格二段跳 · 靠近器物按 E 查阅", 8f);
+            SetHint("A/D 移动，连按同一方向奔跑 · 空格二段跳 · 靠近器物按 E", 8f);
             if (introClip == null || introPlayer == null || videoScreen == null || videoOverlay == null)
             {
                 Debug.LogError("乾清宫第二段片头视频未配置");
@@ -144,12 +151,33 @@ namespace JinYanMaoYing
             float dt = Time.deltaTime;
             Vector2 old = cat.anchoredPosition;
             float input = Input.GetAxisRaw("Horizontal");
-            float x = old.x + input * 390f * dt;
+            int tap = Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow) ? 1 :
+                Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow) ? -1 : 0;
+            if (tap != 0)
+            {
+                sprinting = tap == lastTapDirection && Time.unscaledTime - lastDirectionTapTime < 0.32f;
+                lastTapDirection = tap;
+                lastDirectionTapTime = Time.unscaledTime;
+            }
+            if (Mathf.Abs(input) < 0.1f) sprinting = false;
+            if (Mathf.Abs(input) > 0.1f) facing = input < 0f ? -1 : 1;
+            float x = old.x + input * (sprinting ? 650f : 390f) * dt;
             if (catImage != null && runFrames != null && runFrames.Length > 0 && Mathf.Abs(input) > 0.1f)
             {
-                animationTime += dt * 9f;
+                idleTime = 0f;
+                animationTime += dt * (sprinting ? 16f : 12f);
                 catImage.sprite = runFrames[(int)animationTime % runFrames.Length];
-                catImage.rectTransform.localScale = new Vector3(input < 0f ? -1f : 1f, 1f, 1f);
+                catImage.rectTransform.localScale = new Vector3(facing, 1f, 1f);
+            }
+            else if (catImage != null && Mathf.Abs(input) < 0.1f && jumps == 0)
+            {
+                idleTime += dt;
+                if (idleTime > 3.5f && idleSprite != null)
+                {
+                    catImage.sprite = idleSprite;
+                    float breath = 1f + Mathf.Sin(Time.unscaledTime * 2.3f) * 0.018f;
+                    catImage.rectTransform.localScale = new Vector3(facing * breath, breath, 1f);
+                }
             }
             if ((Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow)) && jumps < 2)
             {
@@ -187,7 +215,7 @@ namespace JinYanMaoYing
             }
             if (Time.time > hintUntil && hint != null)
                 hint.text = currentRoom == 3 ? "向右走到殿门，完成工匠识物考验" :
-                    "走到场景边缘切换区域 · 靠近器物按 E 查阅";
+                    "连按同一方向奔跑 · 走到边缘换区 · 靠近器物按 E 查阅";
         }
 
         private void TryInspect()

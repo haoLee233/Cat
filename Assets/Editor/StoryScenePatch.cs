@@ -25,6 +25,78 @@ public static class StoryScenePatch
         Debug.Log("REMAKE_STORY_SCENES_READY");
     }
 
+    public static void ApplyVisual()
+    {
+        PatchMapInk();
+        PatchEnding();
+        AssetDatabase.SaveAssets();
+        Debug.Log("REMAKE_VISUAL_SCENES_READY");
+    }
+
+    public static void ApplyCatMotion()
+    {
+        Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/乾清宫.unity", OpenSceneMode.Single);
+        QianQingExplorer explorer = UnityEngine.Object.FindObjectOfType<QianQingExplorer>();
+        if (explorer == null || explorer.catImage == null) throw new Exception("乾清宫黑猫配置缺失");
+        explorer.idleSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/趴下.png");
+        if (explorer.idleSprite == null) throw new Exception("黑猫休息姿态缺失");
+        explorer.catImage.preserveAspect = true;
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("REMAKE_CAT_MOTION_READY");
+    }
+
+    private static void PatchMapInk()
+    {
+        Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/故宫地图.unity", OpenSceneMode.Single);
+        Canvas canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+        PalaceMapController controller = UnityEngine.Object.FindObjectOfType<PalaceMapController>();
+        if (canvas == null || controller == null) throw new Exception("地图画布或控制器缺失");
+        Transform existing = canvas.transform.Find("入画墨色");
+        if (existing == null)
+        {
+            RectTransform rect = AddRect(canvas.transform, "入画墨色", new Vector2(1920f, 1080f), Vector2.zero);
+            Image ink = rect.gameObject.AddComponent<Image>();
+            ink.color = new Color(0.07f, 0.07f, 0.07f, 0.83f);
+            ink.raycastTarget = false;
+            controller.openingInk = rect.gameObject.AddComponent<CanvasGroup>();
+            Transform modal = canvas.transform.Find("未解锁提示");
+            if (modal != null) rect.SetSiblingIndex(modal.GetSiblingIndex());
+        }
+        else controller.openingInk = existing.GetComponent<CanvasGroup>();
+        EditorSceneManager.SaveScene(scene);
+    }
+
+    private static void PatchEnding()
+    {
+        Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/终章.unity", OpenSceneMode.Single);
+        Canvas canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+        if (canvas == null) throw new Exception("终章画布缺失");
+        if (canvas.transform.Find("终章故事") != null) return;
+        Transform dim = canvas.transform.Find("阅读遮罩");
+        if (dim == null) throw new Exception("终章阅读遮罩缺失");
+        Sprite gray = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/主地图/地图/地图_黑白.png");
+        if (gray == null) throw new Exception("黑白故宫地图缺失");
+        RectTransform grayRect = AddRect(canvas.transform, "最后的失色画卷", new Vector2(1920f, 1080f), Vector2.zero);
+        Image grayImage = grayRect.gameObject.AddComponent<Image>();
+        grayImage.sprite = gray;
+        grayImage.preserveAspect = false;
+        grayImage.raycastTarget = false;
+        grayRect.SetSiblingIndex(dim.GetSiblingIndex());
+        dim.GetComponent<Image>().color = new Color(0.08f, 0.06f, 0.04f, 0.27f);
+        RectTransform story = AddRect(canvas.transform, "终章故事", new Vector2(1920f, 1080f), Vector2.zero);
+        string[] children = { "结局卷轴", "结局标题", "旅程记录", "结局正文", "再看故宫地图", "返回封面" };
+        foreach (string name in children)
+        {
+            Transform child = canvas.transform.Find(name);
+            if (child == null) throw new Exception("终章对象缺失: " + name);
+            child.SetParent(story, false);
+        }
+        EndingReveal reveal = new GameObject("终章画卷复色", typeof(EndingReveal)).GetComponent<EndingReveal>();
+        reveal.monochromeMap = grayRect.gameObject.AddComponent<CanvasGroup>();
+        reveal.story = story.gameObject.AddComponent<CanvasGroup>();
+        EditorSceneManager.SaveScene(scene);
+    }
+
     private static void PatchCover(Font font)
     {
         Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/封面.unity", OpenSceneMode.Single);

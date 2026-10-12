@@ -223,6 +223,10 @@ public static class RebuildScenes
             new Color(0.96f, 0.90f, 0.78f, 0.88f));
         controller.missionText = Label(canvas.transform, "墨宝的任务", "", 30,
             new Vector2(1570f, 86f), new Vector2(0f, -467f), new Color(0.19f, 0.13f, 0.10f));
+        Image ink = ColorPanel(canvas.transform, "入画墨色", new Vector2(1920f, 1080f), Vector2.zero,
+            new Color(0.07f, 0.07f, 0.07f, 0.83f));
+        ink.raycastTarget = false;
+        controller.openingInk = ink.gameObject.AddComponent<CanvasGroup>();
 
         RectTransform modal = Rect(canvas.transform, "未解锁提示", new Vector2(1920f, 1080f), Vector2.zero);
         Image dim = modal.gameObject.AddComponent<Image>();
@@ -481,6 +485,8 @@ public static class RebuildScenes
         Image cat = Picture(canvas.transform, "探索黑猫", "Assets/Art/WuMen/跑动1.png", new Vector2(160f, 98f), new Vector2(-760f, -306f));
         game.cat = cat.rectTransform;
         game.catImage = cat;
+        cat.preserveAspect = true;
+        game.idleSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/趴下.png");
         game.runFrames = new[] {
             AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动1.png"),
             AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动2.png"),
@@ -696,23 +702,31 @@ public static class RebuildScenes
         Image map = Picture(canvas.transform, "完整复色故宫地图",
             "Assets/Art/主地图/地图/地图_副本.png", new Vector2(1920f, 1080f), Vector2.zero);
         map.preserveAspect = false;
+        Image monochrome = Picture(canvas.transform, "最后的失色画卷",
+            "Assets/Art/主地图/地图/地图_黑白.png", new Vector2(1920f, 1080f), Vector2.zero);
+        monochrome.preserveAspect = false;
+        monochrome.raycastTarget = false;
         ColorPanel(canvas.transform, "阅读遮罩", new Vector2(1920f, 1080f), Vector2.zero,
-            new Color(0.08f, 0.06f, 0.04f, 0.44f));
-        Image scroll = Picture(canvas.transform, "结局卷轴", "Assets/Art/WuMen/WM_Dialog_Box.png",
+            new Color(0.08f, 0.06f, 0.04f, 0.27f));
+        RectTransform story = Rect(canvas.transform, "终章故事", new Vector2(1920f, 1080f), Vector2.zero);
+        Image scroll = Picture(story, "结局卷轴", "Assets/Art/WuMen/WM_Dialog_Box.png",
             new Vector2(1220f, 790f), Vector2.zero);
         scroll.preserveAspect = false;
-        Label(canvas.transform, "结局标题", "故宫重新有了颜色", 68,
+        Label(story, "结局标题", "故宫重新有了颜色", 68,
             new Vector2(970f, 110f), new Vector2(0f, 255f), new Color(0.22f, 0.13f, 0.10f));
-        Label(canvas.transform, "旅程记录", "午门 · 乾清宫 · 保和殿 · 太和殿", 41,
+        Label(story, "旅程记录", "午门 · 乾清宫 · 保和殿 · 太和殿", 41,
             new Vector2(1030f, 80f), new Vector2(0f, 125f), new Color(0.48f, 0.22f, 0.16f));
-        Label(canvas.transform, "结局正文",
+        Label(story, "结局正文",
             "四处足迹，将失落的色彩带回宫阙。\n墨宝的故宫寻迹之旅，到这里告一段落。\n谢谢你与我们一同看见匠人的心意。",
             42, new Vector2(1000f, 230f), new Vector2(0f, -15f), new Color(0.22f, 0.15f, 0.11f));
         GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
-        Button toMap = ActionButton(canvas.transform, "再看故宫地图", "返回故宫地图", new Vector2(335f, 82f), new Vector2(-190f, -265f));
-        Button toCover = ActionButton(canvas.transform, "返回封面", "返回封面", new Vector2(285f, 82f), new Vector2(190f, -265f));
+        Button toMap = ActionButton(story, "再看故宫地图", "返回故宫地图", new Vector2(335f, 82f), new Vector2(-190f, -265f));
+        Button toCover = ActionButton(story, "返回封面", "返回封面", new Vector2(285f, 82f), new Vector2(190f, -265f));
         UnityEventTools.AddPersistentListener(toMap.onClick, nav.OpenMap);
         UnityEventTools.AddPersistentListener(toCover.onClick, nav.OpenCover);
+        EndingReveal reveal = new GameObject("终章画卷复色", typeof(EndingReveal)).GetComponent<EndingReveal>();
+        reveal.monochromeMap = monochrome.gameObject.AddComponent<CanvasGroup>();
+        reveal.story = story.gameObject.AddComponent<CanvasGroup>();
         return Save(scene, GameNavigator.Ending);
     }
 }
