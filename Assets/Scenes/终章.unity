@@ -225,6 +225,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   monochromeMap: {fileID: 812706925}
   story: {fileID: 1675794982}
+  endingClip: {fileID: 32900000, guid: 6d0f5f7ae92edde4487528e704c3d74d, type: 3}
 --- !u!4 &52138312
 Transform:
   m_ObjectHideFlags: 0
@@ -453,6 +454,7 @@ GameObject:
   - component: {fileID: 475844098}
   - component: {fileID: 475844097}
   - component: {fileID: 475844096}
+  - component: {fileID: 475844099}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: "\u518D\u770B\u6545\u5BAB\u5730\u56FE"
@@ -575,6 +577,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 475844094}
   m_CullTransparentMesh: 1
+--- !u!114 &475844099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 475844094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8fa88d04b561b4391d964e17b0a127, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &508391845
 GameObject:
   m_ObjectHideFlags: 0
@@ -1243,6 +1257,7 @@ GameObject:
   - component: {fileID: 1637874063}
   - component: {fileID: 1637874062}
   - component: {fileID: 1637874061}
+  - component: {fileID: 1637874064}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: "\u8FD4\u56DE\u5C01\u9762"
@@ -1365,6 +1380,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1637874059}
   m_CullTransparentMesh: 1
+--- !u!114 &1637874064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637874059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8fa88d04b561b4391d964e17b0a127, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1675794981
 GameObject:
   m_ObjectHideFlags: 0

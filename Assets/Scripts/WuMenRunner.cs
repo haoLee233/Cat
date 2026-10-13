@@ -137,9 +137,9 @@ namespace JinYanMaoYing
         {
             if (missionPrompt == null) { introPlaying = false; yield break; }
             missionPrompt.gameObject.SetActive(true);
-            yield return SlideMission(-2200f, 0f, 0.65f);
-            yield return new WaitForSecondsRealtime(3.3f);
-            yield return SlideMission(0f, 2200f, 0.65f);
+            yield return SlideMission(-2200f, 0f, 0.95f);
+            yield return new WaitForSecondsRealtime(5f);
+            yield return SlideMission(0f, 2200f, 0.95f);
             missionPrompt.gameObject.SetActive(false);
             introPlaying = false;
         }
@@ -268,6 +268,7 @@ namespace JinYanMaoYing
             image.sprite = sprite;
             image.preserveAspect = true;
             image.raycastTarget = false;
+            if (kind == 1) obj.AddComponent<CollectibleGlow>();
             items.Add(new SpawnedItem { rect = rect, kind = kind, beastIndex = kind == 1 ? beasts : -1,
                 baseY = y, phase = spawnCount * 1.7f });
         }
@@ -295,6 +296,7 @@ namespace JinYanMaoYing
                 image.sprite = coinSprite;
                 image.preserveAspect = true;
                 image.raycastTarget = false;
+                obj.AddComponent<CollectibleGlow>().pulseAmount = 0.025f;
                 items.Add(new SpawnedItem { rect = rect, kind = 0, beastIndex = -1, baseY = path[i] });
             }
         }
@@ -302,7 +304,7 @@ namespace JinYanMaoYing
         private void RefreshStatus()
         {
             if (statusText != null) statusText.text = "脊兽 " + beasts + "/3     金币 " + coins + "     得分 " + (coins * 20) + "     体力 " + health;
-            if (hintText != null) hintText.text = "空格 / ↑ 二段跳    ↓ 蹲下躲宫灯    拾币可短暂向前冲刺";
+            if (hintText != null) hintText.text = "发光脊兽请触碰收集 · 石狮和宫灯要躲避 · 空格/↑ 二段跳 · ↓ 蹲下";
         }
 
         private void Finish(bool win)

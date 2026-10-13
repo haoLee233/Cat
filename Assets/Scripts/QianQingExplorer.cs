@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
+using UnityEngine.Sprites;
 
 namespace JinYanMaoYing
 {
@@ -64,6 +65,8 @@ namespace JinYanMaoYing
         private bool changing;
         private bool introPlaying = true;
         private RenderTexture videoTexture;
+        private RawImage relicPreview;
+        private RectTransform relicPreviewFrame;
         private const float Floor = -353f;
         private const float HalfCat = 47f;
         private const float Gravity = 1500f;
@@ -72,6 +75,15 @@ namespace JinYanMaoYing
         {
             if (ending != null) ending.SetActive(false);
             if (quiz != null) quiz.SetActive(false);
+            CreateRelicPreview();
+            quizTitle.fontSize = Mathf.Max(quizTitle.fontSize, 54);
+            quizQuestion.fontSize = Mathf.Max(quizQuestion.fontSize, 40);
+            quizFeedback.fontSize = Mathf.Max(quizFeedback.fontSize, 36);
+            foreach (Text answer in quizAnswers) answer.fontSize = Mathf.Max(answer.fontSize, 42);
+            if (rooms != null)
+                foreach (QianQingRoom room in rooms)
+                    if (room != null && room.relic != null && room.relic.GetComponent<CollectibleGlow>() == null)
+                        room.relic.gameObject.AddComponent<CollectibleGlow>();
             if (fade != null) { fade.alpha = 0f; fade.blocksRaycasts = false; }
             cat.anchoredPosition = new Vector2(-760f, Floor + HalfCat);
             if (catImage != null) catImage.preserveAspect = true;
@@ -243,10 +255,70 @@ namespace JinYanMaoYing
             quizTitle.text = quizIndex == 3 ? "工匠识物 · 通关考验" : "查阅「" + relicNames[quizIndex] + "」";
             quizQuestion.text = observing ? observations[quizIndex] : questions[quizIndex];
             quizFeedback.text = observing ? "先观察场景与器物，再进入辨识。" : "选出正确答案，方可收入图鉴。";
+            bool showRelic = observing && quizIndex < 3 && relicPreviewFrame != null;
+            if (relicPreviewFrame != null) relicPreviewFrame.gameObject.SetActive(showRelic);
+            if (showRelic) ShowRelicPreview(quizIndex);
+            RectTransform feedbackRect = quizFeedback.rectTransform;
+            feedbackRect.anchoredPosition = new Vector2(0f, observing ? -335f : -258f);
             for (int i = 0; i < 3; i++)
             {
                 quizAnswers[i].transform.parent.gameObject.SetActive(!observing || i == 0);
                 quizAnswers[i].text = observing ? "我看清了，继续辨识" : answers[quizIndex, i];
+                quizAnswers[i].transform.parent.GetComponent<RectTransform>().anchoredPosition =
+                    new Vector2(0f, observing ? -255f : 35f - i * 86f);
+            }
+        }
+
+        private void CreateRelicPreview()
+        {
+            if (quiz == null) return;
+            GameObject frame = new GameObject("器物观察画框", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            frame.transform.SetParent(quiz.transform, false);
+            relicPreviewFrame = frame.GetComponent<RectTransform>();
+            relicPreviewFrame.anchorMin = relicPreviewFrame.anchorMax = new Vector2(0.5f, 0.5f);
+            relicPreviewFrame.sizeDelta = new Vector2(350f, 255f);
+            relicPreviewFrame.anchoredPosition = new Vector2(0f, -45f);
+            Image paper = frame.GetComponent<Image>();
+            paper.color = new Color(1f, 0.96f, 0.84f, 0.96f);
+            paper.raycastTarget = false;
+            Outline border = frame.AddComponent<Outline>();
+            border.effectColor = new Color(0.47f, 0.29f, 0.16f, 0.85f);
+            border.effectDistance = new Vector2(3f, -3f);
+            GameObject icon = new GameObject("器物大图", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+            icon.transform.SetParent(frame.transform, false);
+            RectTransform rect = icon.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(260f, 225f);
+            rect.anchoredPosition = Vector2.zero;
+            relicPreview = icon.GetComponent<RawImage>();
+            relicPreview.raycastTarget = false;
+            relicPreviewFrame.SetSiblingIndex(3);
+            frame.SetActive(false);
+        }
+
+        private void ShowRelicPreview(int index)
+        {
+            if (rooms == null || index >= rooms.Length || rooms[index] == null || rooms[index].relic == null) return;
+            RawImage atlasIcon = rooms[index].relic.GetComponent<RawImage>();
+            Image spriteIcon = rooms[index].relic.GetComponent<Image>();
+            if (atlasIcon != null)
+            {
+                relicPreview.texture = atlasIcon.texture;
+                relicPreview.uvRect = atlasIcon.uvRect;
+            }
+            else if (spriteIcon != null && spriteIcon.sprite != null)
+            {
+                relicPreview.texture = spriteIcon.sprite.texture;
+                Vector4 uv = DataUtility.GetOuterUV(spriteIcon.sprite);
+                relicPreview.uvRect = new Rect(uv.x, uv.y, uv.z - uv.x, uv.w - uv.y);
+            }
+            Rect uvRect = relicPreview.uvRect;
+            if (relicPreview.texture != null)
+            {
+                float aspect = relicPreview.texture.width * uvRect.width /
+                    Mathf.Max(1f, relicPreview.texture.height * uvRect.height);
+                relicPreview.rectTransform.sizeDelta = aspect >= 1f ?
+                    new Vector2(290f, 290f / aspect) : new Vector2(225f * aspect, 225f);
             }
         }
 
@@ -299,8 +371,8 @@ namespace JinYanMaoYing
             if (fade != null)
             {
                 fade.blocksRaycasts = true;
-                for (float t = 0f; t < 0.32f; t += Time.unscaledDeltaTime)
-                { fade.alpha = Mathf.Clamp01(t / 0.32f); yield return null; }
+                for (float t = 0f; t < 0.55f; t += Time.unscaledDeltaTime)
+                { fade.alpha = Mathf.Clamp01(t / 0.55f); yield return null; }
                 fade.alpha = 1f;
             }
             ShowRoom(next);
@@ -310,8 +382,8 @@ namespace JinYanMaoYing
             jumps = 0;
             if (fade != null)
             {
-                for (float t = 0f; t < 0.32f; t += Time.unscaledDeltaTime)
-                { fade.alpha = 1f - Mathf.Clamp01(t / 0.32f); yield return null; }
+                for (float t = 0f; t < 0.55f; t += Time.unscaledDeltaTime)
+                { fade.alpha = 1f - Mathf.Clamp01(t / 0.55f); yield return null; }
                 fade.alpha = 0f;
                 fade.blocksRaycasts = false;
             }

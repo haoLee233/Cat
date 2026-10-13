@@ -152,6 +152,7 @@ public static class RebuildScenes
         colors.pressedColor = new Color(0.65f, 0.38f, 0.31f, 1f);
         button.colors = colors;
         Label(rect, "文字", content, 44, size, Vector2.zero, new Color(1f, 0.94f, 0.84f));
+        rect.gameObject.AddComponent<InkHoverButton>();
         return button;
     }
 
@@ -189,8 +190,8 @@ public static class RebuildScenes
         GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
         Button start = ActionButton(canvas.transform, "开始游戏", "点击开始旅程", new Vector2(600f, 92f), new Vector2(0f, -420f));
         UnityEventTools.AddPersistentListener(start.onClick, nav.OpenMap);
-        Label(canvas.transform, "旅程缘起", "墨宝拾起一幅褪色的故宫画卷，沿着匠人的线索找回四处色彩。", 30,
-            new Vector2(1300f, 70f), new Vector2(0f, -320f), new Color(0.18f, 0.13f, 0.10f));
+        Label(canvas.transform, "旅程缘起", "墨宝拾起一幅褪色的故宫画卷，沿着匠人的线索找回四处色彩。", 36,
+            new Vector2(1500f, 90f), new Vector2(0f, -320f), new Color(0.18f, 0.13f, 0.10f));
         Button quit = ActionButton(canvas.transform, "退出游戏", "退出游戏", new Vector2(235f, 72f), new Vector2(810f, 460f));
         UnityEventTools.AddPersistentListener(quit.onClick, nav.Quit);
         return Save(scene, GameNavigator.Cover);
@@ -727,6 +728,8 @@ public static class RebuildScenes
         EndingReveal reveal = new GameObject("终章画卷复色", typeof(EndingReveal)).GetComponent<EndingReveal>();
         reveal.monochromeMap = monochrome.gameObject.AddComponent<CanvasGroup>();
         reveal.story = story.gameObject.AddComponent<CanvasGroup>();
+        reveal.endingClip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_end_video.m4v");
+        if (reveal.endingClip == null) throw new Exception("缺少结局ED视频");
         return Save(scene, GameNavigator.Ending);
     }
 }

@@ -29,7 +29,7 @@ namespace JinYanMaoYing
             instance = root.GetComponent<SceneTransition>();
             instance.veil = panel.GetComponent<Image>();
             instance.veil.color = Color.black;
-            instance.StartCoroutine(instance.Fade(1f, 0f, 0.45f));
+            instance.StartCoroutine(instance.Fade(1f, 0f, 0.75f));
         }
 
         public static void Load(string sceneName)
@@ -47,7 +47,7 @@ namespace JinYanMaoYing
         private IEnumerator Exit()
         {
             transitioning = true;
-            yield return Fade(veil.color.a, 1f, 0.38f);
+            yield return Fade(veil.color.a, 1f, 0.65f);
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -58,11 +58,11 @@ namespace JinYanMaoYing
         private IEnumerator Change(string sceneName)
         {
             transitioning = true;
-            yield return Fade(veil.color.a, 1f, 0.38f);
+            yield return Fade(veil.color.a, 1f, 0.65f);
             Time.timeScale = 1f;
             SceneManager.LoadScene(sceneName);
             yield return null;
-            yield return Fade(1f, 0f, 0.45f);
+            yield return Fade(1f, 0f, 0.75f);
             transitioning = false;
         }
 

@@ -23,7 +23,7 @@ namespace JinYanMaoYing
         {
             if (controller == null || !controller.IsUnlocked(index)) return;
             if (marker != null) marker.localScale = Vector3.one * 1.12f;
-            if (hoverName != null) hoverName.SetActive(true);
+            // The calligraphy on the map is already the place name.
         }
 
         public void OnPointerExit(PointerEventData eventData)

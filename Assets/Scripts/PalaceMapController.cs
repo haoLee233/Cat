@@ -24,6 +24,11 @@ namespace JinYanMaoYing
         private void Start()
         {
             if (colorLayers == null || colorLayers.Length < 4) return;
+            // The extracted color plates overlap neighbouring buildings. Clip each
+            // plate to its own palace so Taihe stays monochrome until its finale.
+            ClipColorLayer(0, new Vector2(-450f, -255f), new Vector2(1080f, 570f));
+            ClipColorLayer(1, new Vector2(270f, 40f), new Vector2(650f, 600f));
+            ClipColorLayer(2, new Vector2(670f, 180f), new Vector2(580f, 700f));
             int progress = GameNavigator.TaiHeDianCleared ? 4 : GameNavigator.BaoHeDianCleared ? 3 :
                 GameNavigator.QianQingGongCleared ? 2 : GameNavigator.WuMenCleared ? 1 : 0;
             int shown = Mathf.Clamp(PlayerPrefs.GetInt("MapShownRecolorCount", 0), 0, progress);
@@ -35,9 +40,39 @@ namespace JinYanMaoYing
                 group.alpha = i < shown ? 1f : 0f;
                 group.blocksRaycasts = false;
             }
-            if (missionText != null) missionText.text = missions[progress];
+            if (missionText != null)
+            {
+                missionText.text = missions[progress];
+                missionText.fontSize = Mathf.Max(missionText.fontSize, 38);
+                Outline outline = missionText.GetComponent<Outline>();
+                if (outline == null) outline = missionText.gameObject.AddComponent<Outline>();
+                outline.effectColor = new Color(1f, 0.97f, 0.84f, 0.9f);
+                outline.effectDistance = new Vector2(2f, -2f);
+                StartCoroutine(PulseMission());
+            }
             if (lockedPrompt != null) lockedPrompt.SetActive(false);
             StartCoroutine(RevealMap(shown, progress));
+        }
+
+        private void ClipColorLayer(int index, Vector2 position, Vector2 size)
+        {
+            GameObject artwork = colorLayers[index];
+            if (artwork == null) return;
+            RectTransform imageRect = artwork.GetComponent<RectTransform>();
+            if (imageRect == null || imageRect.parent == null || imageRect.parent.GetComponent<RectMask2D>() != null) return;
+            Transform parent = imageRect.parent;
+            int sibling = imageRect.GetSiblingIndex();
+            GameObject mask = new GameObject(artwork.name + "范围", typeof(RectTransform), typeof(RectMask2D));
+            RectTransform maskRect = mask.GetComponent<RectTransform>();
+            maskRect.SetParent(parent, false);
+            maskRect.anchorMin = maskRect.anchorMax = new Vector2(0.5f, 0.5f);
+            maskRect.pivot = new Vector2(0.5f, 0.5f);
+            maskRect.sizeDelta = size;
+            maskRect.anchoredPosition = position;
+            maskRect.SetSiblingIndex(sibling);
+            imageRect.SetParent(maskRect, false);
+            imageRect.anchoredPosition = -position;
+            colorLayers[index] = mask;
         }
 
         private IEnumerator RevealMap(int shown, int progress)
@@ -45,9 +80,9 @@ namespace JinYanMaoYing
             if (openingInk != null)
             {
                 openingInk.blocksRaycasts = false;
-                for (float t = 0f; t < 0.8f; t += Time.unscaledDeltaTime)
+                for (float t = 0f; t < 1.2f; t += Time.unscaledDeltaTime)
                 {
-                    openingInk.alpha = 1f - Mathf.SmoothStep(0f, 1f, t / 0.8f);
+                    openingInk.alpha = 1f - Mathf.SmoothStep(0f, 1f, t / 1.2f);
                     yield return null;
                 }
                 openingInk.alpha = 0f;
@@ -55,15 +90,26 @@ namespace JinYanMaoYing
             for (int i = shown; i < progress; i++)
             {
                 CanvasGroup group = colorLayers[i].GetComponent<CanvasGroup>();
-                for (float t = 0f; t < 1.4f; t += Time.unscaledDeltaTime)
+                for (float t = 0f; t < 2.1f; t += Time.unscaledDeltaTime)
                 {
-                    group.alpha = Mathf.SmoothStep(0f, 1f, t / 1.4f);
+                    group.alpha = Mathf.SmoothStep(0f, 1f, t / 2.1f);
                     yield return null;
                 }
                 group.alpha = 1f;
             }
             PlayerPrefs.SetInt("MapShownRecolorCount", progress);
             PlayerPrefs.Save();
+        }
+
+        private IEnumerator PulseMission()
+        {
+            CanvasGroup group = missionText.GetComponent<CanvasGroup>();
+            if (group == null) group = missionText.gameObject.AddComponent<CanvasGroup>();
+            while (missionText != null)
+            {
+                group.alpha = 0.86f + 0.14f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 2.3f));
+                yield return null;
+            }
         }
 
         public bool IsUnlocked(int index)
