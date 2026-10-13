@@ -48,6 +48,33 @@ public static class FeedbackScenePatch
         Debug.Log("FEEDBACK_SCENES_READY");
     }
 
+    [MenuItem("锦檐猫影/接入第三第四段关卡CG和结局ED")]
+    public static void ApplyLevelIntros()
+    {
+        PatchLevelIntro("Assets/Scenes/保和殿水管.unity", "Assets/Videos/第三.m4v", true);
+        PatchLevelIntro("Assets/Scenes/太和殿.unity", "Assets/Videos/第四CG.m4v", false);
+        PatchEnding();
+        AssetDatabase.SaveAssets();
+        Debug.Log("LEVEL_INTROS_AND_ENDING_READY");
+    }
+
+    private static void PatchLevelIntro(string scenePath, string clipPath, bool baoHe)
+    {
+        Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+        MonoBehaviour controller = baoHe
+            ? (MonoBehaviour)UnityEngine.Object.FindObjectOfType<BaoHeDianPipes>()
+            : UnityEngine.Object.FindObjectOfType<TaiHeFinale>();
+        if (controller == null) throw new Exception("关卡控制器缺失: " + scenePath);
+        VideoClip clip = AssetDatabase.LoadAssetAtPath<VideoClip>(clipPath);
+        if (clip == null) throw new Exception("关卡视频素材缺失: " + clipPath);
+        LevelIntroVideo intro = controller.GetComponent<LevelIntroVideo>();
+        if (intro == null) intro = controller.gameObject.AddComponent<LevelIntroVideo>();
+        intro.clip = clip;
+        if (baoHe) ((BaoHeDianPipes)controller).introVideo = intro;
+        else ((TaiHeFinale)controller).introVideo = intro;
+        EditorSceneManager.SaveScene(scene);
+    }
+
     private static void PatchButtons(string path)
     {
         Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);

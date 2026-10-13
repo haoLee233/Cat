@@ -10,6 +10,7 @@ namespace JinYanMaoYing
         public GameObject resultPanel;
         public Text resultText;
         public float timeLimit = 300f;
+        public LevelIntroVideo introVideo;
 
         private readonly int[] angles = new int[25];
         private float remaining;
@@ -38,7 +39,7 @@ namespace JinYanMaoYing
 
         private void Update()
         {
-            if (ended) return;
+            if (ended || (introVideo != null && introVideo.IsPlaying)) return;
             remaining = Mathf.Max(0f, remaining - Time.deltaTime);
             RefreshTimer();
             if (remaining <= 0f) End(false);
@@ -46,7 +47,7 @@ namespace JinYanMaoYing
 
         private void Rotate(int index)
         {
-            if (ended || index < 0 || index >= tiles.Length) return;
+            if (ended || (introVideo != null && introVideo.IsPlaying) || index < 0 || index >= tiles.Length) return;
             angles[index] = (angles[index] + 1) % 4;
             tiles[index].GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 0f, angles[index] * 90f);
             if (AllCorrect()) End(true);

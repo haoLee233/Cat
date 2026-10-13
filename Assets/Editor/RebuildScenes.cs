@@ -587,6 +587,9 @@ public static class RebuildScenes
         ColorPanel(canvas.transform, "拼合区宣纸底色", new Vector2(690f, 690f), new Vector2(-360f, -12f),
             new Color(0.96f, 0.92f, 0.83f, 0.94f));
         BaoHeDianPipes game = new GameObject("保和殿关卡控制", typeof(BaoHeDianPipes)).GetComponent<BaoHeDianPipes>();
+        game.introVideo = game.gameObject.AddComponent<LevelIntroVideo>();
+        game.introVideo.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/第三.m4v");
+        if (game.introVideo.clip == null) throw new Exception("缺少保和殿第三段CG");
         game.timeLimit = 420f;
         game.tiles = new Button[25];
         Texture2D puzzleArt = AssetDatabase.LoadAssetAtPath<Texture2D>(artPath);
@@ -653,6 +656,9 @@ public static class RebuildScenes
         Label(canvas.transform, "终章标题", "太和殿 · 最后一笔", 64,
             new Vector2(900f, 100f), new Vector2(0f, 448f), new Color(0.20f, 0.13f, 0.11f));
         TaiHeFinale game = new GameObject("太和殿终章控制", typeof(TaiHeFinale)).GetComponent<TaiHeFinale>();
+        game.introVideo = game.gameObject.AddComponent<LevelIntroVideo>();
+        game.introVideo.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/第四CG.m4v");
+        if (game.introVideo.clip == null) throw new Exception("缺少太和殿第四段CG");
         Button back = ActionButton(canvas.transform, "返回地图", "返回地图", new Vector2(235f, 74f), new Vector2(805f, 450f));
         UnityEventTools.AddPersistentListener(back.onClick, game.OpenMap);
 

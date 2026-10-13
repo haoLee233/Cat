@@ -10,6 +10,7 @@ namespace JinYanMaoYing
         public Text feedback;
         public Text progress;
         public GameObject completionPanel;
+        public LevelIntroVideo introVideo;
 
         private readonly int[] order = { 1, 2, 0 };
         private readonly string[] clues = {
@@ -29,7 +30,7 @@ namespace JinYanMaoYing
 
         public void SelectPart(int index)
         {
-            if (finished || parts == null || parts.Length != 3 || index < 0 || index >= parts.Length) return;
+            if (finished || (introVideo != null && introVideo.IsPlaying) || parts == null || parts.Length != 3 || index < 0 || index >= parts.Length) return;
             if (index != order[step])
             {
                 if (feedback != null) feedback.text = "再看看线索：沿着建筑由下向上寻找。";

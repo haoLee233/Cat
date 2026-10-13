@@ -2613,6 +2613,7 @@ GameObject:
   m_Component:
   - component: {fileID: 668727354}
   - component: {fileID: 668727353}
+  - component: {fileID: 668727355}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: "\u4FDD\u548C\u6BBF\u5173\u5361\u63A7\u5236"
@@ -2663,6 +2664,7 @@ MonoBehaviour:
   resultPanel: {fileID: 2078475321}
   resultText: {fileID: 339240230}
   timeLimit: 420
+  introVideo: {fileID: 668727355}
 --- !u!4 &668727354
 Transform:
   m_ObjectHideFlags: 0
@@ -2678,6 +2680,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &668727355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 668727352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 267dd5e14c20c6741a8bb52ed3bd7add, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  clip: {fileID: 32900000, guid: 279e28db3bef3044bb9c8016d7b82ddf, type: 3}
 --- !u!1 &670831939
 GameObject:
   m_ObjectHideFlags: 0
