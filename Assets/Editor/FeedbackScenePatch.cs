@@ -3,6 +3,7 @@ using System.IO;
 using JinYanMaoYing;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
+using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -66,8 +67,52 @@ public static class FeedbackScenePatch
                 if (label != null) label.fontSize = 36;
                 premise.GetComponent<RectTransform>().sizeDelta = new Vector2(1500f, 90f);
             }
+            PatchCoverJourneyButtons(canvas);
         }
         EditorSceneManager.SaveScene(scene);
+    }
+
+    private static void PatchCoverJourneyButtons(Canvas canvas)
+    {
+        Transform backdrop = canvas.transform.Find("点击提示底色");
+        Transform continueButton = canvas.transform.Find("开始游戏");
+        GameNavigator nav = UnityEngine.Object.FindObjectOfType<GameNavigator>();
+        if (backdrop == null || continueButton == null || nav == null)
+            throw new Exception("封面进度按钮配置缺失");
+
+        backdrop.GetComponent<RectTransform>().sizeDelta = new Vector2(1260f, 130f);
+        RectTransform continueRect = continueButton.GetComponent<RectTransform>();
+        continueRect.sizeDelta = new Vector2(550f, 92f);
+        continueRect.anchoredPosition = new Vector2(-295f, -420f);
+        Text continueLabel = continueButton.GetComponentInChildren<Text>(true);
+        continueLabel.text = "继续当前进度";
+
+        Transform existing = canvas.transform.Find("从头开始");
+        if (existing != null) return;
+        GameObject fresh = new GameObject("从头开始", typeof(RectTransform), typeof(CanvasRenderer),
+            typeof(Image), typeof(Button));
+        fresh.transform.SetParent(canvas.transform, false);
+        RectTransform rect = fresh.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(550f, 92f);
+        rect.anchoredPosition = new Vector2(295f, -420f);
+        fresh.GetComponent<Image>().color = new Color(0.14f, 0.11f, 0.11f, 0.87f);
+        Button button = fresh.GetComponent<Button>();
+        UnityEventTools.AddPersistentListener(button.onClick, nav.StartNewJourney);
+        GameObject textObject = new GameObject("文字", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+        textObject.transform.SetParent(fresh.transform, false);
+        RectTransform textRect = textObject.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = textRect.offsetMax = Vector2.zero;
+        Text label = textObject.GetComponent<Text>();
+        label.font = continueLabel.font;
+        label.fontSize = 44;
+        label.alignment = TextAnchor.MiddleCenter;
+        label.color = new Color(1f, 0.94f, 0.84f);
+        label.text = "从头开始";
+        label.raycastTarget = false;
+        fresh.AddComponent<InkHoverButton>();
     }
 
     private static void PatchEnding()

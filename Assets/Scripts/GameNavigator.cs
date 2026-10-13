@@ -16,6 +16,16 @@ namespace JinYanMaoYing
 
         public void OpenCover() { SceneTransition.Load(Cover); }
         public void OpenMap() { SceneTransition.Load(Map); }
+        public void StartNewJourney()
+        {
+            PlayerPrefs.DeleteKey("WuMenCleared");
+            PlayerPrefs.DeleteKey("QianQingGongCleared");
+            PlayerPrefs.DeleteKey("BaoHeDianCleared");
+            PlayerPrefs.DeleteKey("TaiHeDianCleared");
+            PlayerPrefs.DeleteKey("MapShownRecolorCount");
+            PlayerPrefs.Save();
+            SceneTransition.Load(Map);
+        }
         public void OpenWuMen() { SceneTransition.Load(WuMen); }
         public void OpenBaoHeDian() { SceneTransition.Load(BaoHeDian); }
         public void OpenWuMenKnowledge() { SceneTransition.Load(WuMenKnowledge); }
