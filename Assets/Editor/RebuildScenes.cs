@@ -286,9 +286,16 @@ public static class RebuildScenes
         runner.crouchSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/趴下.png");
         runner.runFrames = new[] {
             AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动1.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧1.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧4.png"),
             AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动2.png"),
-            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动3.png")
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧2.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧5.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动3.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧3.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧6.png")
         };
+        runner.airborneSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧2.png");
         runner.statusText = status;
         runner.hudFrame = hudFrame;
         runner.hintText = hint;

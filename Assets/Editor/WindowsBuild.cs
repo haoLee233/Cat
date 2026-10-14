@@ -10,6 +10,48 @@ using UnityEngine.UI;
 
 public static class WindowsBuild
 {
+    public static void ApplyRunFramesAndBuild()
+    {
+        const string scenePath = "Assets/Scenes/午门追逐.unity";
+        Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+        WuMenRunner runner = UnityEngine.Object.FindObjectOfType<WuMenRunner>();
+        if (runner == null) throw new Exception("午门关卡控制器缺失");
+
+        string[] framePaths = {
+            "Assets/Art/WuMen/跑动1.png",
+            "Assets/Art/WuMen/跑动中间帧1.png",
+            "Assets/Art/WuMen/跑动中间帧4.png",
+            "Assets/Art/WuMen/跑动2.png",
+            "Assets/Art/WuMen/跑动中间帧2.png",
+            "Assets/Art/WuMen/跑动中间帧5.png",
+            "Assets/Art/WuMen/跑动3.png",
+            "Assets/Art/WuMen/跑动中间帧3.png",
+            "Assets/Art/WuMen/跑动中间帧6.png"
+        };
+        foreach (string path in framePaths)
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null) throw new Exception("找不到午门跑步动画贴图: " + path);
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.alphaIsTransparency = true;
+            importer.mipmapEnabled = false;
+            importer.SaveAndReimport();
+        }
+        Sprite[] frames = Array.ConvertAll(framePaths, AssetDatabase.LoadAssetAtPath<Sprite>);
+        foreach (Sprite frame in frames)
+            if (frame == null) throw new Exception("午门跑步动画帧导入失败");
+
+        runner.runFrames = frames;
+        runner.airborneSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧2.png");
+        if (runner.airborneSprite == null) throw new Exception("午门跳跃姿势导入失败");
+        EditorUtility.SetDirty(runner);
+        EditorSceneManager.MarkSceneDirty(scene);
+        if (!EditorSceneManager.SaveScene(scene)) throw new Exception("无法保存午门动画帧配置");
+        Debug.Log("WUMEN_RUN_CYCLE_UPDATED frames=" + frames.Length);
+        Build();
+    }
+
     public static void Build()
     {
         string[] scenes = {
@@ -43,7 +85,7 @@ public static class WindowsBuild
         WuMenRunner runner = UnityEngine.Object.FindObjectOfType<WuMenRunner>();
         if (runner == null || runner.cat == null || runner.playArea == null || runner.coinSprite == null ||
             runner.lionSprite == null || runner.lanternSprite == null || runner.beastSprites == null || runner.beastSprites.Length != 3 ||
-            runner.runFrames == null || runner.runFrames.Length != 3 || runner.backgrounds == null || runner.backgrounds.Length != 2 ||
+            runner.runFrames == null || runner.runFrames.Length != 9 || runner.airborneSprite == null || runner.backgrounds == null || runner.backgrounds.Length != 2 ||
             runner.introClip == null || runner.missionPrompt == null || runner.settingsPanel == null || runner.crouchSprite == null ||
             runner.rankImage == null || runner.scoreText == null || runner.rankExcellent == null || runner.rankFirst == null || runner.rankSecond == null ||
             runner.hudFrame == null || runner.hudFrame.sprite == null)

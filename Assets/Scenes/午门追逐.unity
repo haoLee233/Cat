@@ -2955,7 +2955,7 @@ Canvas:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1867186745}
   m_Enabled: 1
-  serializedVersion: 3
+  serializedVersion: 4
   m_RenderMode: 0
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
@@ -2965,6 +2965,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_AlwaysInGammaSpace: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -3125,8 +3126,15 @@ MonoBehaviour:
   catImage: {fileID: 1005292991}
   runFrames:
   - {fileID: 21300000, guid: 1f66f2bc041493945a220a9a416edca8, type: 3}
+  - {fileID: 21300000, guid: 75aadeeb8d367104b8f374a40b799c79, type: 3}
+  - {fileID: 21300000, guid: d09f79abbbd3e394d8ee39f056264df4, type: 3}
   - {fileID: 21300000, guid: 7dc89b6cdc1e7094e90f6cfcc185d662, type: 3}
+  - {fileID: 21300000, guid: 108a8abbea1fbca48aa1573128c51928, type: 3}
+  - {fileID: 21300000, guid: ac22b4d533407da4580a0ff4a2ad3c92, type: 3}
   - {fileID: 21300000, guid: 7c2c18263438049459b157f1bcbbd336, type: 3}
+  - {fileID: 21300000, guid: c36fc2ba987c156468920c148c682936, type: 3}
+  - {fileID: 21300000, guid: 50c3d0013ed23c34f951fc7fff8e3ace, type: 3}
+  airborneSprite: {fileID: 21300000, guid: 108a8abbea1fbca48aa1573128c51928, type: 3}
   crouchSprite: {fileID: 21300000, guid: 834b78cbfb42387439e53fcc7295ba1d, type: 3}
   statusText: {fileID: 1304748095}
   hudFrame: {fileID: 1215769301}

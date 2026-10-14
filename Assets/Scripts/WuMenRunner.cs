@@ -9,11 +9,13 @@ namespace JinYanMaoYing
 {
     public sealed class WuMenRunner : MonoBehaviour
     {
+        private const float RunFrameDuration = 0.12f;
         public RectTransform playArea;
         public RectTransform[] backgrounds;
         public RectTransform cat;
         public Image catImage;
         public Sprite[] runFrames;
+        public Sprite airborneSprite;
         public Sprite crouchSprite;
         public Text statusText;
         public Image hudFrame;
@@ -38,12 +40,14 @@ namespace JinYanMaoYing
 
         private const float GroundY = -260f;
         private const float CatStartX = -600f;
+        private const float AirborneTiltDegrees = 12f;
         private readonly List<SpawnedItem> items = new List<SpawnedItem>();
         private RenderTexture videoTexture;
         private Sprite slicedHudSprite;
-        private float verticalSpeed, jumpHeight, nextSpawn, elapsed, runFrameTime;
+        private Quaternion catRestRotation;
+        private float verticalSpeed, jumpHeight, nextSpawn, elapsed, runFrameAccumulator;
         private float catX = CatStartX, forwardImpulse;
-        private int jumpsUsed, coins, beasts, spawnCount;
+        private int jumpsUsed, coins, beasts, spawnCount, runFrameIndex;
         private int health = 3;
         private bool finished, paused, introPlaying = true;
         private bool ducking;
@@ -60,6 +64,7 @@ namespace JinYanMaoYing
         private void Start()
         {
             Time.timeScale = 1f;
+            if (cat != null) catRestRotation = cat.localRotation;
             if (resultPanel != null) resultPanel.SetActive(false);
             if (rankImage != null) rankImage.gameObject.SetActive(false);
             if (scoreText != null) scoreText.gameObject.SetActive(false);
@@ -176,7 +181,7 @@ namespace JinYanMaoYing
                 jumpsUsed++;
             }
             ducking = Input.GetKey(KeyCode.DownArrow) && jumpHeight <= 0.01f;
-            AnimateCat(dt);
+            AnimateCat(dt, jumpHeight > 0.01f || verticalSpeed > 0f);
             verticalSpeed -= 2100f * dt;
             jumpHeight = Mathf.Max(0f, jumpHeight + verticalSpeed * dt);
             if (jumpHeight <= 0f) { verticalSpeed = 0f; jumpsUsed = 0; }
@@ -229,9 +234,17 @@ namespace JinYanMaoYing
             }
         }
 
-        private void AnimateCat(float dt)
+        private void AnimateCat(float dt, bool airborne)
         {
             if (catImage == null) return;
+            if (airborne)
+            {
+                cat.sizeDelta = new Vector2(260f, 155f);
+                cat.localRotation = catRestRotation * Quaternion.Euler(0f, 0f, AirborneTiltDegrees);
+                if (airborneSprite != null) catImage.sprite = airborneSprite;
+                return;
+            }
+            cat.localRotation = catRestRotation;
             if (ducking && crouchSprite != null)
             {
                 catImage.sprite = crouchSprite;
@@ -240,9 +253,13 @@ namespace JinYanMaoYing
             }
             cat.sizeDelta = new Vector2(260f, 155f);
             if (runFrames == null || runFrames.Length == 0) return;
-            runFrameTime += dt;
-            int index = Mathf.FloorToInt(runFrameTime / 0.13f) % runFrames.Length;
-            if (runFrames[index] != null) catImage.sprite = runFrames[index];
+            runFrameAccumulator += Mathf.Max(0f, dt);
+            while (runFrameAccumulator >= RunFrameDuration)
+            {
+                runFrameAccumulator -= RunFrameDuration;
+                runFrameIndex = (runFrameIndex + 1) % runFrames.Length;
+            }
+            if (runFrames[runFrameIndex] != null) catImage.sprite = runFrames[runFrameIndex];
         }
 
         private void SpawnNext()
