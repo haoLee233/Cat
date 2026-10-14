@@ -13,12 +13,79 @@ using UnityEngine.Video;
 // Applies presentation changes to the existing authored scenes without regenerating them.
 public static class FeedbackScenePatch
 {
+    [MenuItem("锦檐猫影/检查本轮场景配置")]
+    public static void ValidateLatestFeedback()
+    {
+        if (Array.Exists(EditorBuildSettings.scenes, item => item.path.EndsWith("/太和殿营造录.unity") && item.enabled))
+            throw new Exception("太和殿营造录仍在构建列表中");
+        ValidateScene("故宫地图", () => {
+            PalaceMapController map = UnityEngine.Object.FindObjectOfType<PalaceMapController>();
+            if (map == null || map.completedMap == null || map.completedMap.sprite == null)
+                throw new Exception("主地图完整彩图未配置");
+        });
+        ValidateScene("保和殿水管", () => {
+            BaoHeDianPipes level = UnityEngine.Object.FindObjectOfType<BaoHeDianPipes>();
+            if (level == null || level.introVideo == null || level.introVideo.clip == null || level.introVideo.buttonFont == null)
+                throw new Exception("保和殿片头或跳过按钮字体未配置");
+            if (level.resultPanel.transform.Find("查看保和殿营造录") != null)
+                throw new Exception("保和殿旧了解按钮仍存在");
+        });
+        ValidateScene("保和殿营造录", () => {
+            Canvas canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+            if (canvas.transform.Find("保和殿外景照片") == null || canvas.transform.Find("保和殿内景照片") == null ||
+                canvas.transform.Find("返回地图") != null || canvas.transform.Find("退出科普") == null)
+                throw new Exception("保和殿营造录布局不完整");
+        });
+        ValidateScene("太和殿", () => {
+            TaiHeFinale level = UnityEngine.Object.FindObjectOfType<TaiHeFinale>();
+            if (level == null || level.introVideo == null || level.introVideo.buttonFont == null)
+                throw new Exception("太和殿片头字体未配置");
+            Button ending = level.completionPanel.transform.Find("观看结局").GetComponent<Button>();
+            if (ending.GetComponentInChildren<Text>(true).text != "观看结局" ||
+                ending.onClick.GetPersistentMethodName(0) != "OpenEnding")
+                throw new Exception("太和殿通关按钮未恢复结局视频");
+        });
+        ValidateScene("终章", () => {
+            EndingReveal ending = UnityEngine.Object.FindObjectOfType<EndingReveal>();
+            if (ending == null || ending.endingClip == null || ending.buttonFont == null)
+                throw new Exception("结局视频或跳过字体未配置");
+        });
+        ValidateScene("乾清宫", () => {
+            QianQingExplorer explorer = UnityEngine.Object.FindObjectOfType<QianQingExplorer>();
+            RectTransform sundial = explorer.rooms[2].relic;
+            float catBottom = explorer.rooms[2].GroundAt(sundial.anchoredPosition.x) + 47f - explorer.cat.rect.height * 0.5f;
+            float sundialBottom = sundial.anchoredPosition.y - sundial.rect.height * 0.5f;
+            if (Mathf.Abs(catBottom - sundialBottom) > 1f)
+                throw new Exception("日晷与猫的图片底边没有对齐");
+        });
+        ValidateScene("匠心图鉴", () => {
+            CollectionGalleryController gallery = UnityEngine.Object.FindObjectOfType<CollectionGalleryController>();
+            if (gallery == null || gallery.detailPhotos == null || gallery.detailPhotos.Length != 6)
+                throw new Exception("图鉴实景照片未配置");
+            for (int i = 0; i < 6; i++)
+            {
+                if (gallery.detailPhotos[i] == null || gallery.icons[i] == null) throw new Exception("图鉴藏品资源缺失: " + i);
+                RawImage icon = gallery.icons[i];
+                float sourceRatio = icon.texture.width * icon.uvRect.width / (icon.texture.height * icon.uvRect.height);
+                float displayRatio = icon.rectTransform.rect.width / icon.rectTransform.rect.height;
+                if (Mathf.Abs(sourceRatio - displayRatio) > 0.02f) throw new Exception("图鉴藏品比例有误: " + i);
+            }
+        });
+        Debug.Log("LATEST_FEEDBACK_VALIDATED");
+    }
+
+    private static void ValidateScene(string name, Action check)
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/" + name + ".unity", OpenSceneMode.Single);
+        check();
+    }
+
     [MenuItem("锦檐猫影/生成本轮反馈 Windows 版")]
     public static void BuildPreview()
     {
         string[] names = {
             "封面", "故宫地图", "午门追逐", "乾清宫", "保和殿水管",
-            "午门营造录", "乾清宫营造录", "太和殿", "终章"
+            "午门营造录", "乾清宫营造录", "保和殿营造录", "太和殿", "匠心图鉴", "终章"
         };
         string[] scenes = Array.ConvertAll(names, name => "Assets/Scenes/" + name + ".unity");
         string output = Path.GetFullPath("Builds/WindowsFeedbackPreview/JinYanMaoYing.exe");
@@ -40,7 +107,7 @@ public static class FeedbackScenePatch
     {
         string[] scenes = {
             "封面", "故宫地图", "午门追逐", "乾清宫", "保和殿水管",
-            "午门营造录", "乾清宫营造录", "太和殿", "终章"
+            "午门营造录", "乾清宫营造录", "保和殿营造录", "太和殿", "终章"
         };
         foreach (string name in scenes) PatchButtons("Assets/Scenes/" + name + ".unity");
         PatchEnding();

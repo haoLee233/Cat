@@ -8,6 +8,7 @@ namespace JinYanMaoYing
     public sealed class LevelIntroVideo : MonoBehaviour
     {
         public VideoClip clip;
+        public Font buttonFont;
         public bool IsPlaying { get; private set; }
 
         private VideoPlayer player;
@@ -66,7 +67,7 @@ namespace JinYanMaoYing
             frame.transform.SetParent(overlay.transform, false);
             RectTransform frameRect = frame.GetComponent<RectTransform>();
             frameRect.anchorMin = frameRect.anchorMax = new Vector2(0.5f, 0.5f);
-            frameRect.sizeDelta = new Vector2(1520f, 850f);
+            frameRect.sizeDelta = new Vector2(1840f, 1030f);
 
             GameObject picture = new GameObject("CG画面", typeof(RectTransform), typeof(CanvasRenderer),
                 typeof(RawImage), typeof(AspectRatioFitter));
@@ -103,7 +104,8 @@ namespace JinYanMaoYing
             labelRect.offsetMin = labelRect.offsetMax = Vector2.zero;
             Text text = label.GetComponent<Text>();
             Text reference = canvas.GetComponentInChildren<Text>(true);
-            if (reference != null) text.font = reference.font;
+            text.font = buttonFont != null ? buttonFont : reference != null ? reference.font : null;
+            if (text.font == null) text.font = Font.CreateDynamicFontFromOSFont("Microsoft YaHei", 39);
             text.fontSize = 39;
             text.alignment = TextAnchor.MiddleCenter;
             text.color = new Color(1f, 0.95f, 0.83f);

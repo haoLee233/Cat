@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,6 +10,7 @@ namespace JinYanMaoYing
         public Text timerText;
         public GameObject resultPanel;
         public Text resultText;
+        public GameObject retryButton;
         public float timeLimit = 300f;
         public LevelIntroVideo introVideo;
 
@@ -70,9 +72,17 @@ namespace JinYanMaoYing
         {
             ended = true;
             if (won) GameNavigator.BaoHeDianCleared = true;
+            if (retryButton != null) retryButton.SetActive(!won);
             foreach (Button tile in tiles) if (tile != null) tile.interactable = false;
             if (resultPanel != null) resultPanel.SetActive(true);
             if (resultText != null) resultText.text = won ? "殿宇营造图已复原\n保和殿重新有了颜色" : "时间已到\n再试一次吧";
+            if (won) StartCoroutine(OpenKnowledgeAfterResult());
+        }
+
+        private IEnumerator OpenKnowledgeAfterResult()
+        {
+            yield return new WaitForSecondsRealtime(4f);
+            SceneTransition.Load(GameNavigator.BaoHeKnowledge);
         }
 
         public void Restart() { SceneTransition.Load(GameNavigator.BaoHeDian); }

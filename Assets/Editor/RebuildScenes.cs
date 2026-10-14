@@ -30,6 +30,8 @@ public static class RebuildScenes
         string knowledge = BuildWuMenKnowledge();
         string qianQingKnowledge = BuildQianQingKnowledge();
         string taiHe = BuildTaiHeDian();
+        string baoHeKnowledge = BuildBaoHeKnowledge();
+        string collection = BuildCollectionGallery();
         string ending = BuildEnding();
         EditorBuildSettings.scenes = new[]
         {
@@ -38,16 +40,332 @@ public static class RebuildScenes
             new EditorBuildSettingsScene(wuMen, true),
             new EditorBuildSettingsScene(qianQing, true),
             new EditorBuildSettingsScene(baoHeDian, true),
+            new EditorBuildSettingsScene(baoHeKnowledge, true),
             new EditorBuildSettingsScene(knowledge, true),
             new EditorBuildSettingsScene(qianQingKnowledge, true),
             new EditorBuildSettingsScene(taiHe, true),
+            new EditorBuildSettingsScene(collection, true),
             new EditorBuildSettingsScene(ending, true),
         };
         PlayerSettings.productName = "锦檐猫影：筑梦人";
         PlayerSettings.companyName = "锦檐猫影";
         AssetDatabase.SaveAssets();
         EditorSceneManager.OpenScene(cover);
-        Debug.Log("REMAKE_SCENES_READY " + cover + ", " + map + ", " + wuMen + ", " + qianQing + ", " + baoHeDian + ", " + knowledge + ", " + qianQingKnowledge + ", " + taiHe + ", " + ending);
+        Debug.Log("REMAKE_SCENES_READY " + cover + ", " + map + ", " + wuMen + ", " + qianQing + ", " + baoHeDian + ", " + baoHeKnowledge + ", " + knowledge + ", " + qianQingKnowledge + ", " + taiHe + ", " + collection + ", " + ending);
+    }
+
+    [MenuItem("锦檐猫影/应用本轮场景修复")]
+    public static void ApplyLatestFeedback()
+    {
+        font = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/STXINGKA.TTF");
+        if (font == null) throw new Exception("缺少 STXINGKA 字体");
+        PatchCollectionEntry();
+        PatchQianQingLayout();
+        PatchTaiHeCompletion();
+        PatchBaoHeCompletion();
+        PatchCompletedMap();
+        PatchVideoFonts();
+        string collection = BuildCollectionGallery();
+        string baoHeKnowledge = BuildBaoHeKnowledge();
+        var configured = new System.Collections.Generic.List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+        configured.RemoveAll(item => item.path.EndsWith("/太和殿营造录.unity"));
+        foreach (string path in new[] { collection, baoHeKnowledge })
+        {
+            bool exists = configured.Exists(item => item.path == path);
+            if (!exists) configured.Add(new EditorBuildSettingsScene(path, true));
+        }
+        EditorBuildSettings.scenes = configured.ToArray();
+        AssetDatabase.SaveAssets();
+        Debug.Log("LATEST_SCENE_FEEDBACK_READY " + collection + ", " + baoHeKnowledge);
+    }
+
+    private static void PatchCollectionEntry()
+    {
+        Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/故宫地图.unity", OpenSceneMode.Single);
+        Canvas canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+        GameNavigator nav = UnityEngine.Object.FindObjectOfType<GameNavigator>();
+        if (canvas == null || nav == null) throw new Exception("主地图画布或导航器缺失");
+        Transform existing = canvas.transform.Find("匠心图鉴入口");
+        if (existing == null)
+        {
+            Button gallery = ActionButton(canvas.transform, "匠心图鉴入口", "匠心图鉴",
+                new Vector2(260f, 76f), new Vector2(-505f, 438f));
+            UnityEventTools.AddPersistentListener(gallery.onClick, nav.OpenCollection);
+        }
+        EditorSceneManager.SaveScene(scene);
+    }
+
+    private static void PatchQianQingLayout()
+    {
+        Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/乾清宫.unity", OpenSceneMode.Single);
+        QianQingExplorer explorer = UnityEngine.Object.FindObjectOfType<QianQingExplorer>();
+        if (explorer == null || explorer.rooms == null || explorer.rooms.Length != 4)
+            throw new Exception("乾清宫区域配置缺失");
+        // Follow the two ground lines marked in the user's screenshots.
+        explorer.rooms[1].floorLeft = -375f;
+        explorer.rooms[2].floorLeft = explorer.rooms[2].floorRight = -315f;
+        explorer.rooms[2].rampStart = 0f;
+        explorer.rooms[2].rampEnd = 0f;
+        if (explorer.rooms[2].relic != null)
+        {
+            Vector2 relicPosition = explorer.rooms[2].relic.anchoredPosition;
+            float catBottom = explorer.rooms[2].GroundAt(relicPosition.x) + 47f - explorer.cat.rect.height * 0.5f;
+            explorer.rooms[2].relic.anchoredPosition = new Vector2(relicPosition.x,
+                catBottom + explorer.rooms[2].relic.rect.height * 0.5f);
+        }
+        Canvas canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+        Transform miniTitle = canvas.transform.Find("小地图标题");
+        if (miniTitle != null) miniTitle.GetComponent<RectTransform>().anchoredPosition = new Vector2(-600f, 420f);
+        if (explorer.status != null)
+        {
+            RectTransform statusRect = explorer.status.rectTransform;
+            statusRect.anchoredPosition = new Vector2(-600f, 226f);
+            statusRect.sizeDelta = new Vector2(540f, 42f);
+            explorer.status.fontSize = 28;
+            explorer.status.alignment = TextAnchor.MiddleCenter;
+        }
+        EditorSceneManager.SaveScene(scene);
+    }
+
+    private static void PatchTaiHeCompletion()
+    {
+        Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/太和殿.unity", OpenSceneMode.Single);
+        TaiHeFinale finale = UnityEngine.Object.FindObjectOfType<TaiHeFinale>();
+        if (finale == null || finale.completionPanel == null) throw new Exception("太和殿通关面板缺失");
+        Button oldEndingButton = null;
+        foreach (Button button in finale.completionPanel.GetComponentsInChildren<Button>(true))
+        {
+            Text label = button.GetComponentInChildren<Text>(true);
+            if (label != null && (label.text == "观看结局" || label.text == "太和殿营造录")) { oldEndingButton = button; break; }
+        }
+        if (oldEndingButton == null) throw new Exception("太和殿通关面板未找到观看结局按钮");
+        oldEndingButton.GetComponentInChildren<Text>(true).text = "观看结局";
+        oldEndingButton.onClick.RemoveAllListeners();
+        for (int i = oldEndingButton.onClick.GetPersistentEventCount() - 1; i >= 0; i--)
+            UnityEventTools.RemovePersistentListener(oldEndingButton.onClick, i);
+        UnityEventTools.AddPersistentListener(oldEndingButton.onClick, finale.OpenEnding);
+        finale.completionPanel.GetComponentInChildren<Text>(true).text = "太和殿重现光彩";
+        EditorSceneManager.SaveScene(scene);
+    }
+
+    private static void PatchBaoHeCompletion()
+    {
+        Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/保和殿水管.unity", OpenSceneMode.Single);
+        BaoHeDianPipes game = UnityEngine.Object.FindObjectOfType<BaoHeDianPipes>();
+        if (game == null || game.resultPanel == null) throw new Exception("保和殿结算面板缺失");
+        Button retry = null;
+        foreach (Button button in game.resultPanel.GetComponentsInChildren<Button>(true))
+        {
+            Text label = button.GetComponentInChildren<Text>(true);
+            if (label != null && label.text == "再试一次") { retry = button; break; }
+        }
+        if (retry == null) throw new Exception("保和殿结算面板未找到重试按钮");
+        game.retryButton = retry.gameObject;
+        Transform existing = game.resultPanel.transform.Find("查看保和殿营造录");
+        if (existing != null) UnityEngine.Object.DestroyImmediate(existing.gameObject);
+        Transform toMap = game.resultPanel.transform.Find("回到地图");
+        if (toMap != null) UnityEngine.Object.DestroyImmediate(toMap.gameObject);
+        LevelIntroVideo intro = game.GetComponent<LevelIntroVideo>();
+        if (intro != null) intro.buttonFont = font;
+        EditorSceneManager.SaveScene(scene);
+    }
+
+    private static void PatchVideoFonts()
+    {
+        Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/太和殿.unity", OpenSceneMode.Single);
+        LevelIntroVideo intro = UnityEngine.Object.FindObjectOfType<LevelIntroVideo>();
+        if (intro != null) intro.buttonFont = font;
+        EditorSceneManager.SaveScene(scene);
+        scene = EditorSceneManager.OpenScene("Assets/Scenes/终章.unity", OpenSceneMode.Single);
+        EndingReveal reveal = UnityEngine.Object.FindObjectOfType<EndingReveal>();
+        if (reveal == null) throw new Exception("结局视频控制器缺失");
+        reveal.buttonFont = font;
+        EditorSceneManager.SaveScene(scene);
+    }
+
+    private static void PatchCompletedMap()
+    {
+        Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/故宫地图.unity", OpenSceneMode.Single);
+        PalaceMapController controller = UnityEngine.Object.FindObjectOfType<PalaceMapController>();
+        Canvas canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+        if (controller == null || canvas == null) throw new Exception("故宫地图控制器缺失");
+        Transform existing = canvas.transform.Find("通关完整彩图");
+        Image complete = existing != null ? existing.GetComponent<Image>() : Picture(canvas.transform,
+            "通关完整彩图", "Assets/Art/主地图/地图/地图_副本.png", new Vector2(1920f, 1080f), Vector2.zero);
+        complete.preserveAspect = false;
+        complete.raycastTarget = false;
+        complete.transform.SetSiblingIndex(controller.colorLayers[3].transform.GetSiblingIndex() + 1);
+        controller.completedMap = complete;
+        EditorSceneManager.SaveScene(scene);
+    }
+
+    private static string BuildBaoHeKnowledge()
+    {
+        Scene scene = NewScene(GameNavigator.BaoHeKnowledge);
+        Canvas canvas = MakeCanvas();
+        ColorPanel(canvas.transform, "宣纸黄底", new Vector2(1920f, 1080f), Vector2.zero,
+            new Color(0.93f, 0.84f, 0.62f));
+        ColorPanel(canvas.transform, "内层纸面", new Vector2(1800f, 950f), new Vector2(0f, -18f),
+            new Color(1f, 0.97f, 0.83f, 0.76f));
+        ColorPanel(canvas.transform, "朱砂标题线", new Vector2(1710f, 5f), new Vector2(0f, 350f),
+            new Color(0.56f, 0.20f, 0.16f));
+        Label(canvas.transform, "主题", "保和殿营造录 · 殿宇与屋檐", 61,
+            new Vector2(1180f, 95f), new Vector2(-145f, 420f), new Color(0.28f, 0.13f, 0.09f));
+        GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
+        Button exit = ActionButton(canvas.transform, "退出科普", "退出", new Vector2(210f, 75f), new Vector2(790f, 422f));
+        UnityEventTools.AddPersistentListener(exit.onClick, nav.OpenMap);
+        Picture(canvas.transform, "保和殿外景照片", "Assets/Art/BaoHeDian/Education/BaoHeExterior.jpg",
+            new Vector2(770f, 465f), new Vector2(-440f, 64f));
+        Picture(canvas.transform, "保和殿内景照片", "Assets/Art/BaoHeDian/Education/BaoHeInterior.jpg",
+            new Vector2(770f, 465f), new Vector2(440f, 64f));
+        Label(canvas.transform, "外景图注", "保和殿外景 · 重檐歇山顶", 30,
+            new Vector2(760f, 56f), new Vector2(-440f, -205f), new Color(0.40f, 0.17f, 0.13f));
+        Label(canvas.transform, "内景图注", "保和殿内景 · 宽敞的殿内空间", 30,
+            new Vector2(760f, 56f), new Vector2(440f, -205f), new Color(0.40f, 0.17f, 0.13f));
+        Text exterior = Label(canvas.transform, "殿宇介绍",
+            "保和殿面阔九间、进深五间，覆黄色琉璃瓦。\n重檐歇山顶的檐角安置九只走兽，\n上下檐的斗拱层层承托宽阔屋顶。",
+            30, new Vector2(780f, 180f), new Vector2(-440f, -330f), new Color(0.22f, 0.16f, 0.11f));
+        exterior.alignment = TextAnchor.UpperLeft;
+        Text interior = Label(canvas.transform, "殿内介绍",
+            "保和殿采用减柱法，减少殿内立柱，\n为典礼活动留出更开阔的空间。\n从石台基到木构屋架，可见多门匠艺的配合。",
+            30, new Vector2(780f, 180f), new Vector2(440f, -330f), new Color(0.22f, 0.16f, 0.11f));
+        interior.alignment = TextAnchor.UpperLeft;
+        Label(canvas.transform, "资料来源", "史料：故宫博物院  ·  摄影：そらみみ、Morio（CC BY-SA；授权见随游戏 CREDITS.md）",
+            22, new Vector2(1680f, 42f), new Vector2(0f, -480f), new Color(0.37f, 0.26f, 0.18f));
+        return Save(scene, GameNavigator.BaoHeKnowledge);
+    }
+
+    private static string BuildCollectionGallery()
+    {
+        string artPath = "Assets/Art/水墨藏品书架.png";
+        TextureImporter importer = AssetImporter.GetAtPath(artPath) as TextureImporter;
+        if (importer == null) throw new Exception("图鉴书架图未导入: " + artPath);
+        if (importer.textureType != TextureImporterType.Sprite)
+        {
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.alphaIsTransparency = true;
+            importer.SaveAndReimport();
+        }
+
+        Scene scene = NewScene(GameNavigator.Collection);
+        Canvas canvas = MakeCanvas();
+        Picture(canvas.transform, "水墨书架背景", artPath, new Vector2(1920f, 1080f), Vector2.zero);
+        ColorPanel(canvas.transform, "标题宣纸底", new Vector2(650f, 100f), new Vector2(0f, 486f),
+            new Color(0.96f, 0.91f, 0.79f, 0.84f));
+        Label(canvas.transform, "图鉴标题", "匠心图鉴", 60, new Vector2(600f, 88f), new Vector2(0f, 486f), new Color(0.26f, 0.15f, 0.10f));
+        CollectionGalleryController gallery = new GameObject("藏品图鉴控制", typeof(CollectionGalleryController)).GetComponent<CollectionGalleryController>();
+        Button back = ActionButton(canvas.transform, "返回故宫地图", "返回故宫地图", new Vector2(310f, 76f), new Vector2(785f, 468f));
+        UnityEventTools.AddPersistentListener(back.onClick, gallery.ReturnToMap);
+        Label(canvas.transform, "图鉴提示", "完成午门与乾清宫后，分别收入脊兽与殿前器物", 25,
+            new Vector2(1020f, 50f), new Vector2(0f, -490f), new Color(0.28f, 0.19f, 0.13f));
+
+        gallery.entries = new Button[6];
+        gallery.icons = new RawImage[6];
+        gallery.names = new Text[6];
+        gallery.lockedMarks = new GameObject[6];
+        gallery.detailPhotos = new Texture[6];
+        Texture2D roofPhoto = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/WuMen/Education/RoofBeasts.jpg");
+        gallery.detailPhotos[0] = gallery.detailPhotos[1] = gallery.detailPhotos[2] = roofPhoto;
+        gallery.detailPhotos[3] = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Collection/CopperCrane.jpg");
+        gallery.detailPhotos[4] = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Collection/JiaLiang.jpg");
+        gallery.detailPhotos[5] = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Collection/Sundial.jpg");
+        foreach (Texture photo in gallery.detailPhotos) if (photo == null) throw new Exception("图鉴实景照片缺失");
+        Sprite[] beasts = {
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/Collect_JiShou_01.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/Collect_JiShou_02.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/Collect_JiShou_03.png")
+        };
+        foreach (Sprite beast in beasts) if (beast == null) throw new Exception("午门脊兽藏品素材缺失");
+        Texture2D relicSheet = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/QianQingGong/乾清宫器物图鉴.png");
+        Sprite sundial = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/QianQingGong/乾清宫日晷.png");
+        if (relicSheet == null || sundial == null) throw new Exception("乾清宫器物图鉴素材缺失");
+        Vector2[] positions = {
+            new Vector2(-520f, 249f), new Vector2(-175f, 249f), new Vector2(170f, 249f), new Vector2(520f, 249f),
+            new Vector2(-520f, 55f), new Vector2(-175f, 55f), new Vector2(170f, 55f), new Vector2(520f, 55f),
+            new Vector2(-520f, -145f), new Vector2(-175f, -145f), new Vector2(170f, -145f), new Vector2(520f, -145f)
+        };
+        Rect[] relicUv = { new Rect(0.02f, 0f, 0.24f, 1f), new Rect(0.31f, 0f, 0.275f, 1f), new Rect(0f, 0f, 1f, 1f) };
+        for (int i = 0; i < 12; i++)
+        {
+            RectTransform slot = Rect(canvas.transform, "书格" + (i + 1), new Vector2(270f, 150f), positions[i]);
+            if (i >= 6)
+            {
+                Label(slot, "待收录", "待收录", 25, new Vector2(230f, 42f), new Vector2(0f, -44f), new Color(0.74f, 0.64f, 0.47f, 0.56f));
+                continue;
+            }
+            Image hitImage = slot.gameObject.AddComponent<Image>();
+            hitImage.color = new Color(0f, 0f, 0f, 0.02f);
+            Button button = slot.gameObject.AddComponent<Button>();
+            button.targetGraphic = hitImage;
+            InkHoverButton hover = slot.gameObject.AddComponent<InkHoverButton>();
+            RawImage icon = RawPicture(slot, "藏品图", new Vector2(174f, 118f), new Vector2(0f, 8f));
+            if (i < 3)
+            {
+                Sprite sprite = beasts[i];
+                icon.texture = sprite.texture;
+                Rect sr = sprite.textureRect;
+                icon.uvRect = new Rect(sr.x / sprite.texture.width, sr.y / sprite.texture.height,
+                    sr.width / sprite.texture.width, sr.height / sprite.texture.height);
+            }
+            else if (i < 5)
+            {
+                icon.texture = relicSheet;
+                icon.uvRect = relicUv[i - 3];
+            }
+            else
+            {
+                icon.texture = sundial.texture;
+                Rect sr = sundial.textureRect;
+                icon.uvRect = new Rect(sr.x / sundial.texture.width, sr.y / sundial.texture.height,
+                    sr.width / sundial.texture.width, sr.height / sundial.texture.height);
+            }
+            FitRawImage(icon, 174f, 118f);
+            gallery.entries[i] = button;
+            gallery.icons[i] = icon;
+            gallery.names[i] = Label(slot, "藏品名称", "", 25, new Vector2(245f, 42f), new Vector2(0f, -53f), new Color(1f, 0.88f, 0.67f));
+            RectTransform locked = Rect(slot, "未收录提示", new Vector2(185f, 45f), new Vector2(0f, -2f));
+            Image lockedBg = locked.gameObject.AddComponent<Image>();
+            lockedBg.color = new Color(0.10f, 0.08f, 0.07f, 0.82f);
+            Text lockedText = Label(locked, "锁定文字", "待寻回", 26, new Vector2(180f, 40f), Vector2.zero, new Color(0.91f, 0.82f, 0.67f));
+            gallery.lockedMarks[i] = locked.gameObject;
+        }
+
+        RectTransform details = Rect(canvas.transform, "藏品介绍面板", new Vector2(1920f, 1080f), Vector2.zero);
+        Image shade = details.gameObject.AddComponent<Image>();
+        shade.color = new Color(0.06f, 0.05f, 0.04f, 0.68f);
+        Picture(details, "介紹卷軸", "Assets/Art/WuMen/WM_Dialog_Box.png", new Vector2(1280f, 760f), Vector2.zero).preserveAspect = false;
+        gallery.detailIcon = RawPicture(details, "藏品实景照片", new Vector2(400f, 340f), new Vector2(-375f, 10f));
+        gallery.detailTitle = Label(details, "藏品介绍标题", "", 53, new Vector2(650f, 90f), new Vector2(205f, 215f), new Color(0.18f, 0.12f, 0.09f));
+        gallery.detailBody = Label(details, "藏品介绍正文", "", 30, new Vector2(670f, 340f), new Vector2(205f, -7f), new Color(0.22f, 0.15f, 0.11f));
+        gallery.detailBody.alignment = TextAnchor.UpperLeft;
+        gallery.detailBody.horizontalOverflow = HorizontalWrapMode.Wrap;
+        gallery.detailBody.verticalOverflow = VerticalWrapMode.Truncate;
+        Button close = ActionButton(details, "关闭介绍", "收起", new Vector2(210f, 68f), new Vector2(270f, -245f));
+        UnityEventTools.AddPersistentListener(close.onClick, gallery.CloseDetails);
+        gallery.details = details.gameObject;
+        gallery.detailGroup = details.gameObject.AddComponent<CanvasGroup>();
+        details.gameObject.SetActive(false);
+        return Save(scene, GameNavigator.Collection);
+    }
+
+    private static UnityEngine.UI.RawImage RawPicture(Transform parent, string name, Vector2 size, Vector2 position)
+    {
+        RectTransform rect = Rect(parent, name, size, position);
+        UnityEngine.UI.RawImage raw = rect.gameObject.AddComponent<UnityEngine.UI.RawImage>();
+        raw.color = Color.white;
+        raw.raycastTarget = false;
+        return raw;
+    }
+
+    private static void FitRawImage(RawImage image, float maxWidth, float maxHeight)
+    {
+        if (image == null || image.texture == null) return;
+        float width = image.texture.width * image.uvRect.width;
+        float height = image.texture.height * image.uvRect.height;
+        if (width <= 0f || height <= 0f) return;
+        float scale = Mathf.Min(maxWidth / width, maxHeight / height);
+        image.rectTransform.sizeDelta = new Vector2(width * scale, height * scale);
     }
 
     private static void ConfigureArt()
@@ -211,6 +529,8 @@ public static class RebuildScenes
         controller.colorLayers[1] = Picture(canvas.transform, "乾清宫通关彩色层", mapArt + "乾清宫_彩色.png", new Vector2(1920f, 1080f), Vector2.zero).gameObject;
         controller.colorLayers[2] = Picture(canvas.transform, "保和殿通关彩色层", mapArt + "保和殿_彩色.png", new Vector2(1920f, 1080f), Vector2.zero).gameObject;
         controller.colorLayers[3] = Picture(canvas.transform, "太和殿通关彩色层", mapArt + "太和殿_彩色.png", new Vector2(1920f, 1080f), Vector2.zero).gameObject;
+        controller.completedMap = Picture(canvas.transform, "通关完整彩图", mapArt + "地图_副本.png", new Vector2(1920f, 1080f), Vector2.zero);
+        controller.completedMap.preserveAspect = false;
         ColorPanel(canvas.transform, "标题墨色", new Vector2(760f, 124f), new Vector2(0f, 475f), new Color(0.10f, 0.09f, 0.08f, 0.70f));
         Label(canvas.transform, "地图标题", "故宫寻迹", 68, new Vector2(700f, 112f), new Vector2(0f, 475f), Color.white);
         GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
@@ -222,6 +542,8 @@ public static class RebuildScenes
         UnityEventTools.AddPersistentListener(back.onClick, nav.OpenCover);
         Button quit = ActionButton(canvas.transform, "退出游戏", "退出游戏", new Vector2(260f, 76f), new Vector2(805f, 438f));
         UnityEventTools.AddPersistentListener(quit.onClick, nav.Quit);
+        Button gallery = ActionButton(canvas.transform, "匠心图鉴入口", "匠心图鉴", new Vector2(260f, 76f), new Vector2(-505f, 438f));
+        UnityEventTools.AddPersistentListener(gallery.onClick, nav.OpenCollection);
         ColorPanel(canvas.transform, "任务卷轴底色", new Vector2(1660f, 100f), new Vector2(0f, -467f),
             new Color(0.96f, 0.90f, 0.78f, 0.88f));
         controller.missionText = Label(canvas.transform, "墨宝的任务", "", 30,
@@ -455,7 +777,7 @@ public static class RebuildScenes
         string[] backgrounds = { "乾清宫殿外_新绘.png", "乾清宫丹陛_新绘.png", "乾清宫侧月台_新绘.png", "乾清宫殿内_新绘.png" };
         string[] names = { "乾清宫前庭", "丹陛高台", "东侧月台", "乾清宫正殿" };
         string[] relicNames = { "铜鹤", "嘉量", "日晷" };
-        Vector2[] relicPositions = { new Vector2(490f, -280f), new Vector2(650f, 90f), new Vector2(485f, -280f) };
+        Vector2[] relicPositions = { new Vector2(490f, -280f), new Vector2(650f, 90f), new Vector2(485f, -230f) };
         Texture2D relicSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(art + "乾清宫器物图鉴.png");
         if (relicSheet == null) throw new Exception("缺少乾清宫器物图鉴");
         for (int i = 0; i < 4; i++)
@@ -466,8 +788,9 @@ public static class RebuildScenes
             Image background = Picture(root, "场景水墨画", art + backgrounds[i], new Vector2(1920f, 1080f), Vector2.zero);
             background.preserveAspect = false;
             background.color = new Color(0.88f, 0.86f, 0.81f, 1f);
-            room.floorLeft = -353f;
+            room.floorLeft = i == 1 ? -375f : i == 2 ? -315f : -353f;
             room.floorRight = i == 1 ? 20f : -353f;
+            if (i == 2) room.floorRight = -315f;
             room.rampStart = i == 1 ? -310f : 0f;
             room.rampEnd = i == 1 ? 500f : 0f;
             if (i < 3)
@@ -596,6 +919,7 @@ public static class RebuildScenes
         BaoHeDianPipes game = new GameObject("保和殿关卡控制", typeof(BaoHeDianPipes)).GetComponent<BaoHeDianPipes>();
         game.introVideo = game.gameObject.AddComponent<LevelIntroVideo>();
         game.introVideo.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/第三.m4v");
+        game.introVideo.buttonFont = font;
         if (game.introVideo.clip == null) throw new Exception("缺少保和殿第三段CG");
         game.timeLimit = 420f;
         game.tiles = new Button[25];
@@ -645,9 +969,8 @@ public static class RebuildScenes
         game.resultPanel = result.gameObject;
         game.resultText = Label(result, "结果文字", "", 57, new Vector2(590f, 190f), new Vector2(0f, 90f), new Color(0.15f, 0.10f, 0.10f));
         Button retry = ActionButton(result, "再试一次", "再试一次", new Vector2(270f, 82f), new Vector2(-155f, -120f));
-        Button toMap = ActionButton(result, "回到地图", "回到地图", new Vector2(270f, 82f), new Vector2(155f, -120f));
         UnityEventTools.AddPersistentListener(retry.onClick, game.Restart);
-        UnityEventTools.AddPersistentListener(toMap.onClick, game.OpenMap);
+        game.retryButton = retry.gameObject;
         return Save(scene, GameNavigator.BaoHeDian);
     }
 
@@ -665,6 +988,7 @@ public static class RebuildScenes
         TaiHeFinale game = new GameObject("太和殿终章控制", typeof(TaiHeFinale)).GetComponent<TaiHeFinale>();
         game.introVideo = game.gameObject.AddComponent<LevelIntroVideo>();
         game.introVideo.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/第四CG.m4v");
+        game.introVideo.buttonFont = font;
         if (game.introVideo.clip == null) throw new Exception("缺少太和殿第四段CG");
         Button back = ActionButton(canvas.transform, "返回地图", "返回地图", new Vector2(235f, 74f), new Vector2(805f, 450f));
         UnityEventTools.AddPersistentListener(back.onClick, game.OpenMap);

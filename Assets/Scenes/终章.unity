@@ -226,6 +226,7 @@ MonoBehaviour:
   monochromeMap: {fileID: 812706925}
   story: {fileID: 1675794982}
   endingClip: {fileID: 32900000, guid: 6d0f5f7ae92edde4487528e704c3d74d, type: 3}
+  buttonFont: {fileID: 12800000, guid: 5a16943c8c5604d42ac6b17125bb4f7d, type: 3}
 --- !u!4 &52138312
 Transform:
   m_ObjectHideFlags: 0

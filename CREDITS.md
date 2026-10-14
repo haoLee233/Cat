@@ -9,3 +9,13 @@
 - 乾清宫建筑文字参考故宫博物院「乾清宫」：https://www.dpm.org.cn/explore/building/236472.html 。
 
 照片用于游戏中的文化介绍。若再分发修改过的照片，请按各自授权署名并保留相同方式共享要求。
+
+## 保和殿建筑与图鉴实景照片
+
+- 保和殿建筑文字依据：故宫博物院《保和殿》 https://www.dpm.org.cn/explore/building/236434.html 。
+- `Assets/Art/BaoHeDian/Education/BaoHeExterior.jpg`：そらみみ，*Hall of Preserving Harmony 20160826*，Wikimedia Commons，CC BY-SA 4.0。来源：https://commons.wikimedia.org/wiki/File:Hall_of_Preserving_Harmony_20160826.jpg；授权：https://creativecommons.org/licenses/by-sa/4.0/ 。工程中使用缩放版。
+- `Assets/Art/BaoHeDian/Education/BaoHeInterior.jpg`：Morio，*Hall of Preserving Harmony interior 2010 April*，Wikimedia Commons，CC BY-SA 3.0。来源：https://commons.wikimedia.org/wiki/File:Hall_of_Preserving_Harmony_interior_2010_April.jpg；授权：https://creativecommons.org/licenses/by-sa/3.0/ 。工程中使用缩放版。
+- `Assets/Art/Collection/CopperCrane.jpg`：Yinan Chen，*Gfp-beijing-forbidden-palace-crane-statue*，Wikimedia Commons，作者已声明进入公有领域。来源：https://commons.wikimedia.org/wiki/File:Gfp-beijing-forbidden-palace-crane-statue.jpg 。工程中使用缩放版，作为故宫铜鹤实景例图；照片并非标识为乾清宫本件。
+- `Assets/Art/Collection/JiaLiang.jpg`：深蓝，*嘉量*，Wikimedia Commons，公有领域。来源：https://commons.wikimedia.org/wiki/File:%E5%98%89%E9%87%8F.jpg 。
+- `Assets/Art/Collection/Sundial.jpg`：Alex Ostrovski，*Sundial in Forbidden City*，Wikimedia Commons，CC BY-SA 4.0。来源：https://commons.wikimedia.org/wiki/File:Sundial_in_Forbidden_City.jpg；授权：https://creativecommons.org/licenses/by-sa/4.0/ 。
+- 图鉴三件脊兽共用前述 `RoofBeasts.jpg` 故宫屋顶实景照作为放大介绍图；书架格内继续使用游戏原创水墨藏品画。

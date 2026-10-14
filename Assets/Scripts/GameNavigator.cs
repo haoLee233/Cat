@@ -13,6 +13,8 @@ namespace JinYanMaoYing
         public const string QianQingKnowledge = "乾清宫营造录";
         public const string TaiHeDian = "太和殿";
         public const string Ending = "终章";
+        public const string Collection = "匠心图鉴";
+        public const string BaoHeKnowledge = "保和殿营造录";
 
         public void OpenCover() { SceneTransition.Load(Cover); }
         public void OpenMap() { SceneTransition.Load(Map); }
@@ -31,6 +33,8 @@ namespace JinYanMaoYing
         public void OpenWuMenKnowledge() { SceneTransition.Load(WuMenKnowledge); }
         public void OpenQianQingKnowledge() { SceneTransition.Load(QianQingKnowledge); }
         public void OpenEnding() { SceneTransition.Load(Ending); }
+        public void OpenCollection() { SceneTransition.Load(Collection); }
+        public void OpenBaoHeKnowledge() { SceneTransition.Load(BaoHeKnowledge); }
         public void Quit() { SceneTransition.Quit(); }
 
         public static bool WuMenCleared

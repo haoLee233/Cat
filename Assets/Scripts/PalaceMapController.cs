@@ -12,6 +12,7 @@ namespace JinYanMaoYing
         public Text promptText;
         public Text missionText;
         public CanvasGroup openingInk;
+        public Image completedMap;
 
         private readonly string[] missions = {
             "墨宝拾起褪色的故宫画卷。先到午门找回屋脊脊兽，让城门重新上色。",
@@ -32,6 +33,14 @@ namespace JinYanMaoYing
             int progress = GameNavigator.TaiHeDianCleared ? 4 : GameNavigator.BaoHeDianCleared ? 3 :
                 GameNavigator.QianQingGongCleared ? 2 : GameNavigator.WuMenCleared ? 1 : 0;
             int shown = Mathf.Clamp(PlayerPrefs.GetInt("MapShownRecolorCount", 0), 0, progress);
+            if (completedMap != null)
+            {
+                completedMap.gameObject.SetActive(progress == 4);
+                CanvasGroup fullGroup = completedMap.GetComponent<CanvasGroup>();
+                if (fullGroup == null) fullGroup = completedMap.gameObject.AddComponent<CanvasGroup>();
+                fullGroup.alpha = shown == 4 ? 1f : 0f;
+                fullGroup.blocksRaycasts = false;
+            }
             for (int i = 0; i < 4; i++)
             {
                 colorLayers[i].SetActive(i < progress);
@@ -96,6 +105,16 @@ namespace JinYanMaoYing
                     yield return null;
                 }
                 group.alpha = 1f;
+            }
+            if (progress == 4 && shown < 4 && completedMap != null)
+            {
+                CanvasGroup fullGroup = completedMap.GetComponent<CanvasGroup>();
+                for (float t = 0f; t < 1.8f; t += Time.unscaledDeltaTime)
+                {
+                    fullGroup.alpha = Mathf.SmoothStep(0f, 1f, t / 1.8f);
+                    yield return null;
+                }
+                fullGroup.alpha = 1f;
             }
             PlayerPrefs.SetInt("MapShownRecolorCount", progress);
             PlayerPrefs.Save();
