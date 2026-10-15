@@ -41,6 +41,13 @@ namespace JinYanMaoYing
         private const float GroundY = -260f;
         private const float CatStartX = -600f;
         private const float AirborneTiltDegrees = 12f;
+        private const float TutorialTriggerDistance = 410f;
+        private const float RunningHitHeight = 118f;
+        private const float CrouchingHitHeight = 70f;
+        private const float LionHitHalfWidth = 68f;
+        private const float LionHitHeight = 88f;
+        private const float LanternHitHalfWidth = 52f;
+        private const float LanternHitHeight = 100f;
         private readonly List<SpawnedItem> items = new List<SpawnedItem>();
         private RenderTexture videoTexture;
         private Sprite slicedHudSprite;
@@ -51,6 +58,11 @@ namespace JinYanMaoYing
         private int health = 3;
         private bool finished, paused, introPlaying = true;
         private bool ducking;
+        private bool lionTutorialSeen, lanternTutorialSeen;
+        private SpawnedItem tutorialItem;
+        private GameObject tutorialOverlay;
+        private Text tutorialTitle, tutorialBody, tutorialAction;
+        private Image tutorialPreview;
 
         private sealed class SpawnedItem
         {
@@ -59,6 +71,7 @@ namespace JinYanMaoYing
             public int beastIndex;
             public float baseY;
             public float phase;
+            public bool lantern;
         }
 
         private void Start()
@@ -70,6 +83,7 @@ namespace JinYanMaoYing
             if (scoreText != null) scoreText.gameObject.SetActive(false);
             if (settingsPanel != null) settingsPanel.SetActive(false);
             if (missionPrompt != null) missionPrompt.gameObject.SetActive(false);
+            CreateObstacleTutorial();
             nextSpawn = 1.15f;
             if (hudFrame != null && hudFrame.sprite != null)
             {
@@ -171,6 +185,7 @@ namespace JinYanMaoYing
         private void Update()
         {
             if (finished || paused || introPlaying) return;
+            if (tutorialItem != null) { HandleTutorialInput(); return; }
             float dt = Time.deltaTime;
             elapsed += dt;
             MoveBackground(dt);
@@ -205,11 +220,21 @@ namespace JinYanMaoYing
                 Vector2 position = item.rect.anchoredPosition + Vector2.left * speed * dt;
                 if (item.kind == 1) position.y = item.baseY + Mathf.Sin(elapsed * 3.4f + item.phase) * 16f;
                 item.rect.anchoredPosition = position;
+                if (item.kind == 2 && position.x > catX && position.x - catX <= TutorialTriggerDistance &&
+                    (item.lantern ? !lanternTutorialSeen : !lionTutorialSeen) && tutorialOverlay != null)
+                {
+                    ShowObstacleTutorial(item);
+                    return;
+                }
                 float dx = Mathf.Abs(item.rect.anchoredPosition.x - catX);
-                float dy = Mathf.Abs(item.rect.anchoredPosition.y - cat.anchoredPosition.y);
-                float catHeight = ducking ? 95f : cat.sizeDelta.y;
-                float halfHeight = (catHeight + item.rect.sizeDelta.y) * 0.5f;
-                if (dx < 85f && dy < halfHeight)
+                float hitY = item.kind == 2 && item.lantern ? position.y - 86f : position.y;
+                float dy = Mathf.Abs(hitY - cat.anchoredPosition.y);
+                float catHeight = item.kind == 2 ? (ducking ? CrouchingHitHeight : RunningHitHeight) :
+                    (ducking ? 95f : cat.sizeDelta.y);
+                float itemHeight = item.kind != 2 ? item.rect.sizeDelta.y :
+                    (item.lantern ? LanternHitHeight : LionHitHeight);
+                float halfWidth = item.kind != 2 ? 85f : (item.lantern ? LanternHitHalfWidth : LionHitHalfWidth);
+                if (dx < halfWidth && dy < (catHeight + itemHeight) * 0.5f)
                 {
                     if (item.kind == 0) { coins++; forwardImpulse = Mathf.Min(400f, forwardImpulse + 28f); }
                     else if (item.kind == 1 && item.beastIndex == beasts) { beasts++; forwardImpulse = Mathf.Min(400f, forwardImpulse + 110f); }
@@ -268,6 +293,148 @@ namespace JinYanMaoYing
             if (runFrames[runFrameIndex] != null) catImage.sprite = runFrames[runFrameIndex];
         }
 
+        private void CreateObstacleTutorial()
+        {
+            Canvas canvas = playArea != null ? playArea.GetComponentInParent<Canvas>() : null;
+            Font font = hintText != null ? hintText.font : statusText != null ? statusText.font : null;
+            if (canvas == null || font == null)
+            {
+                Debug.LogWarning("午门障碍教学缺少 Canvas 或字体，跳过首次引导。");
+                return;
+            }
+
+            tutorialOverlay = new GameObject("午门障碍操作教学", typeof(RectTransform),
+                typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+            tutorialOverlay.transform.SetParent(canvas.transform, false);
+            RectTransform shadeRect = tutorialOverlay.GetComponent<RectTransform>();
+            shadeRect.anchorMin = Vector2.zero;
+            shadeRect.anchorMax = Vector2.one;
+            shadeRect.offsetMin = Vector2.zero;
+            shadeRect.offsetMax = Vector2.zero;
+            UnityEngine.UI.Image shade = tutorialOverlay.GetComponent<UnityEngine.UI.Image>();
+            shade.color = new Color(0.035f, 0.028f, 0.025f, 0.77f);
+            shade.raycastTarget = true;
+
+            GameObject scroll = new GameObject("教学卷轴", typeof(RectTransform),
+                typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+            scroll.transform.SetParent(tutorialOverlay.transform, false);
+            RectTransform scrollRect = scroll.GetComponent<RectTransform>();
+            scrollRect.anchorMin = scrollRect.anchorMax = new Vector2(0.5f, 0.5f);
+            scrollRect.sizeDelta = new Vector2(1320f, 600f);
+            UnityEngine.UI.Image scrollImage = scroll.GetComponent<UnityEngine.UI.Image>();
+            UnityEngine.UI.Image missionImage = missionPrompt != null ? missionPrompt.GetComponent<UnityEngine.UI.Image>() : null;
+            scrollImage.sprite = missionImage != null ? missionImage.sprite : null;
+            scrollImage.color = scrollImage.sprite != null ? Color.white : new Color(0.96f, 0.9f, 0.77f, 0.98f);
+            scrollImage.preserveAspect = scrollImage.sprite != null;
+            scrollImage.raycastTarget = false;
+
+            GameObject previewBacking = new GameObject("障碍预览底色", typeof(RectTransform),
+                typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+            previewBacking.transform.SetParent(scroll.transform, false);
+            RectTransform backingRect = previewBacking.GetComponent<RectTransform>();
+            backingRect.anchorMin = backingRect.anchorMax = new Vector2(0.5f, 0.5f);
+            backingRect.anchoredPosition = new Vector2(-355f, -10f);
+            backingRect.sizeDelta = new Vector2(330f, 390f);
+            UnityEngine.UI.Image backingImage = previewBacking.GetComponent<UnityEngine.UI.Image>();
+            backingImage.color = new Color(0.26f, 0.20f, 0.16f, 0.90f);
+            backingImage.raycastTarget = false;
+
+            GameObject preview = new GameObject("障碍形象", typeof(RectTransform),
+                typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+            preview.transform.SetParent(previewBacking.transform, false);
+            RectTransform previewRect = preview.GetComponent<RectTransform>();
+            previewRect.anchorMin = previewRect.anchorMax = new Vector2(0.5f, 0.5f);
+            previewRect.sizeDelta = new Vector2(300f, 350f);
+            tutorialPreview = preview.GetComponent<UnityEngine.UI.Image>();
+            tutorialPreview.preserveAspect = true;
+            tutorialPreview.raycastTarget = false;
+            Outline previewEdge = preview.AddComponent<Outline>();
+            previewEdge.effectColor = new Color(1f, 0.89f, 0.67f, 0.95f);
+            previewEdge.effectDistance = new Vector2(5f, -5f);
+
+            Color ink = new Color(0.18f, 0.12f, 0.09f, 1f);
+            tutorialTitle = CreateTutorialText(scroll.transform, "障碍名称", font, 68,
+                new Vector2(240f, 155f), new Vector2(650f, 105f), ink);
+            tutorialBody = CreateTutorialText(scroll.transform, "操作说明", font, 47,
+                new Vector2(240f, 5f), new Vector2(670f, 200f), ink);
+            tutorialAction = CreateTutorialText(scroll.transform, "继续提示", font, 42,
+                new Vector2(240f, -155f), new Vector2(660f, 85f), new Color(0.48f, 0.16f, 0.10f, 1f));
+            tutorialOverlay.SetActive(false);
+        }
+
+        private static Text CreateTutorialText(Transform parent, string name, Font font, int fontSize,
+            Vector2 position, Vector2 size, Color color)
+        {
+            GameObject obj = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(UnityEngine.UI.Text));
+            obj.transform.SetParent(parent, false);
+            RectTransform rect = obj.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            UnityEngine.UI.Text label = obj.GetComponent<UnityEngine.UI.Text>();
+            label.font = font;
+            label.fontSize = fontSize;
+            label.color = color;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
+            label.raycastTarget = false;
+            return label;
+        }
+
+        private void ShowObstacleTutorial(SpawnedItem item)
+        {
+            tutorialItem = item;
+            if (item.lantern)
+            {
+                lanternTutorialSeen = true;
+                tutorialTitle.text = "宫灯低垂";
+                tutorialBody.text = "按住 ↓ 蹲下\n从宫灯下穿过；跳跃会撞上灯。";
+                tutorialAction.text = "按住 ↓ 开始下蹲";
+                tutorialPreview.sprite = lanternSprite;
+            }
+            else
+            {
+                lionTutorialSeen = true;
+                tutorialTitle.text = "石狮挡路";
+                tutorialBody.text = "按空格 / ↑ / 左键跳过\n连续障碍可再按一次二段跳。";
+                tutorialAction.text = "按跳跃键开始跳跃";
+                tutorialPreview.sprite = lionSprite;
+            }
+            tutorialOverlay.transform.SetAsLastSibling();
+            tutorialOverlay.SetActive(true);
+        }
+
+        private void HandleTutorialInput()
+        {
+            // The obstacle stays still while an already airborne cat finishes landing.
+            if (jumpHeight > 0f)
+            {
+                float dt = Time.deltaTime;
+                verticalSpeed -= 2100f * dt;
+                jumpHeight = Mathf.Max(0f, jumpHeight + verticalSpeed * dt);
+                if (jumpHeight <= 0f) { verticalSpeed = 0f; jumpsUsed = 0; }
+                cat.anchoredPosition = new Vector2(catX, GroundY + jumpHeight);
+                AnimateCat(dt, jumpHeight > 0f);
+                return;
+            }
+            if (tutorialItem.lantern)
+            {
+                if (!Input.GetKey(KeyCode.DownArrow)) return;
+                ducking = true;
+                AnimateCat(0f, false);
+            }
+            else
+            {
+                if (!Input.GetKeyDown(KeyCode.Space) && !Input.GetKeyDown(KeyCode.UpArrow) &&
+                    !Input.GetMouseButtonDown(0)) return;
+                verticalSpeed = 840f;
+                jumpsUsed = 1;
+            }
+            tutorialOverlay.SetActive(false);
+            tutorialItem = null;
+        }
+
         private void SpawnNext()
         {
             spawnCount++;
@@ -282,9 +449,10 @@ namespace JinYanMaoYing
             RectTransform rect = obj.GetComponent<RectTransform>();
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = kind == 1 ? new Vector2(112f, 120f) : new Vector2(150f, 170f);
+            rect.sizeDelta = kind == 1 ? new Vector2(112f, 120f) :
+                lantern ? new Vector2(230f, 260f) : new Vector2(124f, 132f);
             float beastY = new[] { -215f, -95f, -160f }[beasts];
-            float y = kind == 1 ? beastY : lantern ? -120f : -235f;
+            float y = kind == 1 ? beastY : lantern ? -75f : -254f;
             rect.anchoredPosition = new Vector2(1060f, y);
             if (kind == 1) rect.localRotation = Quaternion.Euler(0f, 0f, beasts == 1 ? 8f : -7f);
             Image image = obj.GetComponent<Image>();
@@ -292,8 +460,15 @@ namespace JinYanMaoYing
             image.preserveAspect = true;
             image.raycastTarget = false;
             if (kind == 1) obj.AddComponent<CollectibleGlow>();
+            else
+            {
+                Outline edge = obj.AddComponent<Outline>();
+                edge.effectColor = new Color(0.46f, 0.14f, 0.09f, 0.95f);
+                edge.effectDistance = new Vector2(5f, -5f);
+                edge.useGraphicAlpha = true;
+            }
             items.Add(new SpawnedItem { rect = rect, kind = kind, beastIndex = kind == 1 ? beasts : -1,
-                baseY = y, phase = spawnCount * 1.7f });
+                baseY = y, phase = spawnCount * 1.7f, lantern = lantern });
         }
 
         private void SpawnCoinTrail()
@@ -327,7 +502,7 @@ namespace JinYanMaoYing
         private void RefreshStatus()
         {
             if (statusText != null) statusText.text = "脊兽 " + beasts + "/3     金币 " + coins + "     得分 " + (coins * 20) + "     体力 " + health;
-            if (hintText != null) hintText.text = "发光脊兽请触碰收集 · 石狮和宫灯要躲避 · 空格/↑ 二段跳 · ↓ 蹲下";
+            if (hintText != null) hintText.text = "石狮：跳跃（可二段跳）   宫灯：按住↓蹲下   发光脊兽：收集";
         }
 
         private void Finish(bool win)
@@ -428,6 +603,7 @@ namespace JinYanMaoYing
             }
             if (videoTexture != null) { videoTexture.Release(); Destroy(videoTexture); }
             if (slicedHudSprite != null) Destroy(slicedHudSprite);
+            if (tutorialOverlay != null) Destroy(tutorialOverlay);
         }
     }
 }
