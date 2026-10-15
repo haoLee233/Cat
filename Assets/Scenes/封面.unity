@@ -409,7 +409,7 @@ MonoBehaviour:
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
-    m_MaxSize: 40
+    m_MaxSize: 44
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -690,6 +690,7 @@ GameObject:
   m_Component:
   - component: {fileID: 984099632}
   - component: {fileID: 984099631}
+  - component: {fileID: 984099633}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: "\u573A\u666F\u5BFC\u822A"
@@ -710,6 +711,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed0ace317f463c34d8996ed0f44d10ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  openingIntro: {fileID: 984099633}
 --- !u!4 &984099632
 Transform:
   m_ObjectHideFlags: 0
@@ -725,6 +727,36 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &984099633
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 984099630}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 267dd5e14c20c6741a8bb52ed3bd7add, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  clip: {fileID: 32900000, guid: 398f96d88bc103e4680f2140200b956f, type: 3}
+  buttonFont: {fileID: 0}
+  playOnStart: 0
+  onFinished:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 984099631}
+        m_TargetAssemblyTypeName: JinYanMaoYing.GameNavigator, Assembly-CSharp
+        m_MethodName: OpeningIntroFinished
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1085747729
 GameObject:
   m_ObjectHideFlags: 0
@@ -990,8 +1022,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 810, y: 460}
-  m_SizeDelta: {x: 235, y: 72}
+  m_AnchoredPosition: {x: 790, y: 475}
+  m_SizeDelta: {x: 223.35, y: 72}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1255962029
 MonoBehaviour:
@@ -1314,7 +1346,7 @@ Canvas:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1953941500}
   m_Enabled: 1
-  serializedVersion: 3
+  serializedVersion: 4
   m_RenderMode: 0
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
@@ -1324,6 +1356,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_AlwaysInGammaSpace: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0

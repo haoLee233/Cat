@@ -1,4 +1,7 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using UnityEngine.Video;
 
 namespace JinYanMaoYing
 {
@@ -16,6 +19,25 @@ namespace JinYanMaoYing
         public const string Collection = "匠心图鉴";
         public const string BaoHeKnowledge = "保和殿营造录";
 
+        public LevelIntroVideo openingIntro;
+
+        private void Start()
+        {
+            if (SceneManager.GetActiveScene().name != Cover) return;
+            Text[] texts = FindObjectsOfType<Text>(true);
+            foreach (Text text in texts)
+            {
+                if (text.gameObject.name != "旅程缘起") continue;
+                text.text = text.text.TrimEnd('。');
+                Outline glow = text.GetComponent<Outline>();
+                if (glow == null) glow = text.gameObject.AddComponent<Outline>();
+                glow.effectColor = new Color(1f, 0.78f, 0.42f, 0.96f);
+                glow.effectDistance = new Vector2(1.35f, 1.35f);
+                glow.useGraphicAlpha = true;
+                break;
+            }
+        }
+
         public void OpenCover() { SceneTransition.Load(Cover); }
         public void OpenMap() { SceneTransition.Load(Map); }
         public void StartNewJourney()
@@ -25,6 +47,15 @@ namespace JinYanMaoYing
             PlayerPrefs.DeleteKey("BaoHeDianCleared");
             PlayerPrefs.DeleteKey("TaiHeDianCleared");
             PlayerPrefs.DeleteKey("MapShownRecolorCount");
+            PlayerPrefs.SetInt("WuMenIntroWatched", 0);
+            PlayerPrefs.Save();
+            if (openingIntro != null) openingIntro.Play();
+            else SceneTransition.Load(Map);
+        }
+
+        public void OpeningIntroFinished()
+        {
+            PlayerPrefs.SetInt("WuMenIntroWatched", 1);
             PlayerPrefs.Save();
             SceneTransition.Load(Map);
         }

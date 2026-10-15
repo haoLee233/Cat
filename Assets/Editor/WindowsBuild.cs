@@ -7,9 +7,48 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 public static class WindowsBuild
 {
+    public static void ImproveEndingVideoClarity()
+    {
+        const string path = "Assets/Videos/Scene_end_video.m4v";
+        VideoClipImporter importer = AssetImporter.GetAtPath(path) as VideoClipImporter;
+        if (importer == null) throw new Exception("结局视频导入器缺失: " + path);
+        VideoImporterTargetSettings settings = importer.GetTargetSettings("Standalone");
+        settings.enableTranscoding = false;
+        settings.resizeMode = VideoResizeMode.OriginalSize;
+        settings.spatialQuality = VideoSpatialQuality.HighSpatialQuality;
+        importer.SetTargetSettings("Standalone", settings);
+        importer.SaveAndReimport();
+        VideoClip clip = AssetDatabase.LoadAssetAtPath<VideoClip>(path);
+        if (clip == null) throw new Exception("结局视频重新导入失败: " + path);
+        Debug.Log("ENDING_VIDEO_SOURCE_QUALITY width=" + clip.width + " height=" + clip.height +
+            " duration=" + clip.length + " transcoding=off resize=original");
+    }
+
+    public static void PatchOpeningIntroAndBuild()
+    {
+        Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/封面.unity", OpenSceneMode.Single);
+        GameNavigator nav = UnityEngine.Object.FindObjectOfType<GameNavigator>();
+        if (nav == null) throw new Exception("封面导航器缺失");
+        LevelIntroVideo intro = nav.GetComponent<LevelIntroVideo>();
+        if (intro == null) intro = nav.gameObject.AddComponent<LevelIntroVideo>();
+        intro.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_one_video.m4v");
+        if (intro.clip == null) throw new Exception("缺少午门片头 Scene_one_video.m4v");
+        intro.playOnStart = false;
+        if (intro.onFinished == null) intro.onFinished = new UnityEngine.Events.UnityEvent();
+        nav.openingIntro = intro;
+        if (intro.onFinished.GetPersistentEventCount() == 0)
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(intro.onFinished, nav.OpeningIntroFinished);
+        EditorUtility.SetDirty(nav);
+        EditorUtility.SetDirty(intro);
+        EditorSceneManager.MarkSceneDirty(scene);
+        if (!EditorSceneManager.SaveScene(scene)) throw new Exception("无法保存封面片头配置");
+        Build();
+    }
+
     public static void ApplyRunFramesAndBuild()
     {
         const string scenePath = "Assets/Scenes/午门追逐.unity";
@@ -54,6 +93,7 @@ public static class WindowsBuild
 
     public static void Build()
     {
+        ImproveEndingVideoClarity();
         string[] scenes = {
             "Assets/Scenes/封面.unity",
             "Assets/Scenes/故宫地图.unity",

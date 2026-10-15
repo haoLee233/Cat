@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
+using UnityEngine.Events;
 
 namespace JinYanMaoYing
 {
@@ -9,20 +10,27 @@ namespace JinYanMaoYing
     {
         public VideoClip clip;
         public Font buttonFont;
+        public bool playOnStart = true;
+        public UnityEvent onFinished = new UnityEvent();
         public bool IsPlaying { get; private set; }
 
         private VideoPlayer player;
         private RenderTexture texture;
         private GameObject overlay;
 
-        private void Awake() { IsPlaying = true; }
-
         private void Start()
         {
+            if (playOnStart) Play();
+        }
+
+        public void Play()
+        {
+            if (IsPlaying) return;
+            IsPlaying = true;
             if (clip == null)
             {
                 Debug.LogError("关卡片头视频未配置: " + gameObject.name);
-                IsPlaying = false;
+                Finish();
                 return;
             }
 
@@ -30,7 +38,7 @@ namespace JinYanMaoYing
             if (canvas == null)
             {
                 Debug.LogError("关卡片头找不到画布: " + gameObject.name);
-                IsPlaying = false;
+                Finish();
                 return;
             }
 
@@ -92,7 +100,7 @@ namespace JinYanMaoYing
             RectTransform skipRect = skip.GetComponent<RectTransform>();
             skipRect.anchorMin = skipRect.anchorMax = new Vector2(0.5f, 0.5f);
             skipRect.sizeDelta = new Vector2(230f, 74f);
-            skipRect.anchoredPosition = new Vector2(805f, 455f);
+            skipRect.anchoredPosition = new Vector2(900f, 550f);
             skip.GetComponent<Image>().color = new Color(0.15f, 0.11f, 0.10f, 0.91f);
             skip.GetComponent<Button>().onClick.AddListener(Finish);
             skip.AddComponent<InkHoverButton>();
@@ -133,6 +141,7 @@ namespace JinYanMaoYing
             IsPlaying = false;
             if (player != null) player.Stop();
             if (overlay != null) overlay.SetActive(false);
+            if (onFinished != null) onFinished.Invoke();
         }
 
         private void OnDestroy()

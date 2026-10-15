@@ -80,6 +80,12 @@ namespace JinYanMaoYing
                 hudFrame.type = Image.Type.Sliced;
             }
             RefreshStatus();
+            if (PlayerPrefs.GetInt("WuMenIntroWatched", 0) == 1)
+            {
+                introPlaying = false;
+                if (videoOverlay != null) videoOverlay.SetActive(false);
+                return;
+            }
             if (introClip == null || introPlayer == null || videoScreen == null)
             {
                 Debug.LogError("午门片头视频未配置");

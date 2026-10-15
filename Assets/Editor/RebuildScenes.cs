@@ -506,12 +506,22 @@ public static class RebuildScenes
         Picture(canvas.transform, "完整封面", "Assets/Art/CoverBg.png", new Vector2(1920f, 1080f), Vector2.zero);
         ColorPanel(canvas.transform, "点击提示底色", new Vector2(1260f, 130f), new Vector2(0f, -420f), new Color(1f, 1f, 1f, 0.33f));
         GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
+        LevelIntroVideo openingIntro = nav.gameObject.AddComponent<LevelIntroVideo>();
+        openingIntro.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_one_video.m4v");
+        openingIntro.playOnStart = false;
+        if (openingIntro.clip == null) throw new Exception("缺少午门片头 Scene_one_video.m4v");
+        nav.openingIntro = openingIntro;
+        UnityEventTools.AddPersistentListener(openingIntro.onFinished, nav.OpeningIntroFinished);
         Button start = ActionButton(canvas.transform, "开始游戏", "继续当前进度", new Vector2(550f, 92f), new Vector2(-295f, -420f));
         UnityEventTools.AddPersistentListener(start.onClick, nav.OpenMap);
         Button fresh = ActionButton(canvas.transform, "从头开始", "从头开始", new Vector2(550f, 92f), new Vector2(295f, -420f));
         UnityEventTools.AddPersistentListener(fresh.onClick, nav.StartNewJourney);
-        Label(canvas.transform, "旅程缘起", "墨宝拾起一幅褪色的故宫画卷，沿着匠人的线索找回四处色彩。", 36,
+        Text journeyText = Label(canvas.transform, "旅程缘起", "墨宝拾起一幅褪色的故宫画卷，沿着匠人的线索找回四处色彩", 36,
             new Vector2(1500f, 90f), new Vector2(0f, -320f), new Color(0.18f, 0.13f, 0.10f));
+        Outline journeyGlow = journeyText.gameObject.AddComponent<Outline>();
+        journeyGlow.effectColor = new Color(1f, 0.78f, 0.42f, 0.96f);
+        journeyGlow.effectDistance = new Vector2(1.35f, 1.35f);
+        journeyGlow.useGraphicAlpha = true;
         Button quit = ActionButton(canvas.transform, "退出游戏", "退出游戏", new Vector2(235f, 72f), new Vector2(810f, 460f));
         UnityEventTools.AddPersistentListener(quit.onClick, nav.Quit);
         return Save(scene, GameNavigator.Cover);
@@ -682,7 +692,7 @@ public static class RebuildScenes
         raw.raycastTarget = false;
         AspectRatioFitter fit = videoRect.gameObject.AddComponent<AspectRatioFitter>();
         fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-        Button skip = ActionButton(videoOverlay, "跳过片头", "跳过片头", new Vector2(230f, 72f), new Vector2(805f, 460f));
+        Button skip = ActionButton(videoOverlay, "跳过片头", "跳过片头", new Vector2(230f, 72f), new Vector2(900f, 550f));
         UnityEventTools.AddPersistentListener(skip.onClick, runner.SkipVideo);
         runner.videoOverlay = videoOverlay.gameObject;
         runner.videoScreen = raw;

@@ -103,7 +103,7 @@ public static class StoryScenePatch
         Canvas canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
         if (canvas == null) throw new Exception("封面画布缺失");
         if (canvas.transform.Find("旅程缘起") == null)
-            AddText(canvas.transform, "旅程缘起", "墨宝拾起一幅褪色的故宫画卷，沿着匠人的线索找回四处色彩。",
+            AddText(canvas.transform, "旅程缘起", "墨宝拾起一幅褪色的故宫画卷，沿着匠人的线索找回四处色彩",
                 font, 30, new Vector2(1300f, 70f), new Vector2(0f, -320f));
         EditorSceneManager.SaveScene(scene);
     }
