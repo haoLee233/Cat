@@ -545,9 +545,9 @@ public static class RebuildScenes
         Label(canvas.transform, "地图标题", "故宫寻迹", 68, new Vector2(700f, 112f), new Vector2(0f, 475f), Color.white);
         GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
         AddMapHotspot(canvas.transform, controller, 0, "午门", mapArt + "午门（字体）.png", new Vector2(-378f, -302f));
-        AddMapHotspot(canvas.transform, controller, 1, "乾清宫", mapArt + "乾清宫（字体）.png", new Vector2(184f, 86f));
+        AddMapHotspot(canvas.transform, controller, 1, "乾清宫", mapArt + "乾清宫（字体）.png", new Vector2(-225f, 280f));
         AddMapHotspot(canvas.transform, controller, 2, "保和殿", mapArt + "保和殿（字体）.png", new Vector2(595f, 252f));
-        AddMapHotspot(canvas.transform, controller, 3, "太和殿", mapArt + "太和殿（字体）.png", new Vector2(-225f, 280f));
+        AddMapHotspot(canvas.transform, controller, 3, "太和殿", mapArt + "太和殿（字体）.png", new Vector2(184f, 86f));
         Button back = ActionButton(canvas.transform, "返回封面", "返回封面", new Vector2(260f, 76f), new Vector2(-805f, 438f));
         UnityEventTools.AddPersistentListener(back.onClick, nav.OpenCover);
         Button quit = ActionButton(canvas.transform, "退出游戏", "退出游戏", new Vector2(260f, 76f), new Vector2(805f, 438f));
