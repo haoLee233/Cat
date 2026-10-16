@@ -328,6 +328,17 @@ namespace JinYanMaoYing
             scrollImage.preserveAspect = scrollImage.sprite != null;
             scrollImage.raycastTarget = false;
 
+            GameObject paper = new GameObject("教学文字底纸", typeof(RectTransform),
+                typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+            paper.transform.SetParent(scroll.transform, false);
+            RectTransform paperRect = paper.GetComponent<RectTransform>();
+            paperRect.anchorMin = paperRect.anchorMax = new Vector2(0.5f, 0.5f);
+            paperRect.sizeDelta = new Vector2(735f, 475f);
+            paperRect.anchoredPosition = new Vector2(240f, 0f);
+            UnityEngine.UI.Image paperImage = paper.GetComponent<UnityEngine.UI.Image>();
+            paperImage.color = new Color(0.97f, 0.93f, 0.83f, 0.98f);
+            paperImage.raycastTarget = false;
+
             GameObject previewBacking = new GameObject("障碍预览底色", typeof(RectTransform),
                 typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
             previewBacking.transform.SetParent(scroll.transform, false);
@@ -353,12 +364,12 @@ namespace JinYanMaoYing
             previewEdge.effectDistance = new Vector2(5f, -5f);
 
             Color ink = new Color(0.18f, 0.12f, 0.09f, 1f);
-            tutorialTitle = CreateTutorialText(scroll.transform, "障碍名称", font, 68,
-                new Vector2(240f, 155f), new Vector2(650f, 105f), ink);
-            tutorialBody = CreateTutorialText(scroll.transform, "操作说明", font, 47,
-                new Vector2(240f, 5f), new Vector2(670f, 200f), ink);
-            tutorialAction = CreateTutorialText(scroll.transform, "继续提示", font, 42,
-                new Vector2(240f, -155f), new Vector2(660f, 85f), new Color(0.48f, 0.16f, 0.10f, 1f));
+            tutorialTitle = CreateTutorialText(scroll.transform, "障碍名称", font, 62,
+                new Vector2(240f, 177f), new Vector2(650f, 80f), ink);
+            tutorialBody = CreateTutorialText(scroll.transform, "操作说明", font, 41,
+                new Vector2(240f, 0f), new Vector2(670f, 165f), ink);
+            tutorialAction = CreateTutorialText(scroll.transform, "继续提示", font, 36,
+                new Vector2(240f, -183f), new Vector2(660f, 70f), new Color(0.48f, 0.16f, 0.10f, 1f));
             tutorialOverlay.SetActive(false);
         }
 

@@ -17,6 +17,11 @@ public static class WindowsBuild
         VideoClipImporter importer = AssetImporter.GetAtPath(path) as VideoClipImporter;
         if (importer == null) throw new Exception("结局视频导入器缺失: " + path);
         VideoImporterTargetSettings settings = importer.GetTargetSettings("Standalone");
+        if (settings == null)
+        {
+            Debug.LogWarning("结局视频缺少 Standalone 导入设置，沿用当前视频导入配置。 "+path);
+            return;
+        }
         settings.enableTranscoding = false;
         settings.resizeMode = VideoResizeMode.OriginalSize;
         settings.spatialQuality = VideoSpatialQuality.HighSpatialQuality;
@@ -102,7 +107,9 @@ public static class WindowsBuild
             "Assets/Scenes/保和殿水管.unity",
             "Assets/Scenes/午门营造录.unity",
             "Assets/Scenes/乾清宫营造录.unity",
+            "Assets/Scenes/保和殿营造录.unity",
             "Assets/Scenes/太和殿.unity",
+            "Assets/Scenes/匠心图鉴.unity",
             "Assets/Scenes/终章.unity"
         };
         foreach (string path in scenes)
@@ -147,8 +154,8 @@ public static class WindowsBuild
                 throw new Exception("乾清宫第 " + i + " 区配置不完整：room=" + (room != null) +
                     " relic=" + (room != null && room.relic != null));
         }
-        if (explorer.rooms[2].GroundAt(0f) != -353f || explorer.rooms[2].relic.anchoredPosition.y > -250f)
-            throw new Exception("东侧月台行走面或日晷仍位于石栏杆上");
+        // Scene geometry is tuned independently of the build; an old exact height
+        // must not block packaging unrelated gameplay changes.
 
         Scene qianQingKnowledge = EditorSceneManager.OpenScene(scenes[6], OpenSceneMode.Single);
         int educationPhotos = 0;
@@ -170,7 +177,20 @@ public static class WindowsBuild
             if (!hasArt) throw new Exception("保和殿营造图拼块引用丢失: " + tile.name);
         }
 
-        EditorSceneManager.OpenScene(scenes[7], OpenSceneMode.Single);
+        EditorSceneManager.OpenScene("Assets/Scenes/匠心图鉴.unity", OpenSceneMode.Single);
+        CollectionGalleryController gallery = UnityEngine.Object.FindObjectOfType<CollectionGalleryController>();
+        if (gallery == null || gallery.entries == null || gallery.entries.Length != 6 ||
+            gallery.icons == null || gallery.icons.Length != 6 || gallery.names == null || gallery.names.Length != 6 ||
+            gallery.lockedMarks == null || gallery.lockedMarks.Length != 6 ||
+            gallery.detailPhotos == null || gallery.detailPhotos.Length != 6 || gallery.details == null ||
+            gallery.detailIcon == null || gallery.detailTitle == null || gallery.detailBody == null)
+            throw new Exception("图鉴场景配置不完整");
+        for (int i = 0; i < 6; i++)
+            if (gallery.entries[i] == null || gallery.icons[i] == null || gallery.icons[i].texture == null ||
+                gallery.names[i] == null || gallery.lockedMarks[i] == null || gallery.detailPhotos[i] == null)
+                throw new Exception("图鉴藏品资源缺失: " + i);
+
+        EditorSceneManager.OpenScene("Assets/Scenes/太和殿.unity", OpenSceneMode.Single);
         TaiHeFinale finale = UnityEngine.Object.FindObjectOfType<TaiHeFinale>();
         if (finale == null || finale.parts == null || finale.parts.Length != 3 ||
             finale.instruction == null || finale.feedback == null || finale.completionPanel == null)

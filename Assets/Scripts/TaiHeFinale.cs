@@ -57,7 +57,7 @@ namespace JinYanMaoYing
             if (instruction != null) instruction.gameObject.SetActive(false);
             if (feedback != null) feedback.gameObject.SetActive(false);
             if (progress != null) progress.gameObject.SetActive(false);
-            Canvas canvas = FindObjectOfType<Canvas>();
+            Canvas canvas = FindSceneCanvas();
             if (canvas == null) { Debug.LogError("太和殿缺少画布"); enabled=false; return; }
             string[] sceneFiles = { "前庭台基", "檐下修缮架", "正殿内景" };
             for (int i=0;i<3;i++) {
@@ -78,7 +78,17 @@ namespace JinYanMaoYing
             Enter(0,true);
             Tell("A/D 移动 · 空格二段跳 · 梯口 ↑/↓ 攀爬 · 靠近构件按 E",8f);
         }
+        private Canvas FindSceneCanvas()
+        {
+            foreach (GameObject sceneRoot in gameObject.scene.GetRootGameObjects())
+            {
+                Canvas sceneCanvas = sceneRoot.GetComponent<Canvas>();
+                if (sceneCanvas != null) return sceneCanvas;
+            }
+            return null;
+        }
         private void OnDestroy() {
+            if (root != null) Destroy(root.gameObject);
             foreach(Material material in materials) if(material!=null) Destroy(material);
         }
         private void LateUpdate()
@@ -92,7 +102,15 @@ namespace JinYanMaoYing
         private void Build(Transform canvas)
         {
             root=Rect(canvas,"太和殿三景复色关卡",new Vector2(1920,1080),Vector2.zero);
+            root.anchorMin=Vector2.zero;
+            root.anchorMax=Vector2.one;
+            root.offsetMin=Vector2.zero;
+            root.offsetMax=Vector2.zero;
             backdrop=Raw(root,"建筑底图",Vector2.zero,new Vector2(1920,1080),scenes[0]);
+            backdrop.rectTransform.anchorMin=Vector2.zero;
+            backdrop.rectTransform.anchorMax=Vector2.one;
+            backdrop.rectTransform.offsetMin=Vector2.zero;
+            backdrop.rectTransform.offsetMax=Vector2.zero;
             backdrop.raycastTarget=false;
             Panel(root,"顶部墨色",new Vector2(1920,144),new Vector2(0,466),
                 new Color(.13f,.10f,.08f,.78f));
@@ -121,6 +139,10 @@ namespace JinYanMaoYing
                 new Vector2(0,-491),new Color(.37f,.20f,.14f));
             BuildAssembly();
             Image curtain=Panel(root,"切换渐隐",new Vector2(1920,1080),Vector2.zero,Color.black);
+            curtain.rectTransform.anchorMin=Vector2.zero;
+            curtain.rectTransform.anchorMax=Vector2.one;
+            curtain.rectTransform.offsetMin=Vector2.zero;
+            curtain.rectTransform.offsetMax=Vector2.zero;
             curtain.raycastTarget=false;
             fade=curtain.gameObject.AddComponent<CanvasGroup>();
             fade.alpha=0; fade.blocksRaycasts=false;
@@ -141,6 +163,7 @@ namespace JinYanMaoYing
             Button(panel,"左转 A",new Vector2(220,72),new Vector2(-275,-190),()=>Rotate(-1));
             Button(panel,"嵌合 空格",new Vector2(240,72),new Vector2(0,-190),Assemble);
             Button(panel,"右转 D",new Vector2(220,72),new Vector2(275,-190),()=>Rotate(1));
+            Button(panel,"返回地图",new Vector2(220,69),new Vector2(830,482),OpenMap);
             assemblyHint=Text(panel,"提示","",30,new Vector2(900,65),
                 new Vector2(0,-100),new Color(.42f,.22f,.16f));
             assembly.SetActive(false);
@@ -148,6 +171,7 @@ namespace JinYanMaoYing
 
         private void Update()
         {
+            if(Input.GetKeyDown(KeyCode.Escape)) { OpenMap(); return; }
             if(finished || transitioning || introVideo!=null && introVideo.IsPlaying) return;
             if(inAssembly) {
                 if(Input.GetKeyDown(KeyCode.A)||Input.GetKeyDown(KeyCode.LeftArrow)) Rotate(-1);

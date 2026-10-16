@@ -34,7 +34,7 @@ namespace JinYanMaoYing
                 return;
             }
 
-            Canvas canvas = FindObjectOfType<Canvas>();
+            Canvas canvas = FindSceneCanvas();
             if (canvas == null)
             {
                 Debug.LogError("关卡片头找不到画布: " + gameObject.name);
@@ -56,6 +56,16 @@ namespace JinYanMaoYing
             player.errorReceived += OnError;
             player.Prepare();
             StartCoroutine(PreparationTimeout());
+        }
+
+        private Canvas FindSceneCanvas()
+        {
+            foreach (GameObject sceneRoot in gameObject.scene.GetRootGameObjects())
+            {
+                Canvas sceneCanvas = sceneRoot.GetComponent<Canvas>();
+                if (sceneCanvas != null) return sceneCanvas;
+            }
+            return null;
         }
 
         private void CreateOverlay(Canvas canvas)
@@ -100,7 +110,7 @@ namespace JinYanMaoYing
             RectTransform skipRect = skip.GetComponent<RectTransform>();
             skipRect.anchorMin = skipRect.anchorMax = new Vector2(0.5f, 0.5f);
             skipRect.sizeDelta = new Vector2(230f, 74f);
-            skipRect.anchoredPosition = new Vector2(900f, 550f);
+            skipRect.anchoredPosition = new Vector2(805f, 475f);
             skip.GetComponent<Image>().color = new Color(0.15f, 0.11f, 0.10f, 0.91f);
             skip.GetComponent<Button>().onClick.AddListener(Finish);
             skip.AddComponent<InkHoverButton>();
@@ -146,6 +156,7 @@ namespace JinYanMaoYing
 
         private void OnDestroy()
         {
+            if (overlay != null) Destroy(overlay);
             if (player != null)
             {
                 player.prepareCompleted -= OnPrepared;
