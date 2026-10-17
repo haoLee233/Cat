@@ -159,7 +159,13 @@ namespace JinYanMaoYing
             if (!IsUnlocked(index)) { ShowLocked(); return; }
             switch (index)
             {
-                case 0: SceneTransition.Load(GameNavigator.WuMen); break;
+                case 0:
+                    // Starting the first level from the map should always play its CG.
+                    // Restarts from inside the level do not pass through this entry point.
+                    PlayerPrefs.SetInt("WuMenLevelIntroWatched", 0);
+                    PlayerPrefs.Save();
+                    SceneTransition.Load(GameNavigator.WuMen);
+                    break;
                 case 1: SceneTransition.Load(GameNavigator.QianQingGong); break;
                 case 2: SceneTransition.Load(GameNavigator.BaoHeDian); break;
                 case 3: SceneTransition.Load(GameNavigator.TaiHeDian); break;

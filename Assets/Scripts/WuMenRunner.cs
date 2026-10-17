@@ -94,7 +94,7 @@ namespace JinYanMaoYing
                 hudFrame.type = Image.Type.Sliced;
             }
             RefreshStatus();
-            if (PlayerPrefs.GetInt("WuMenIntroWatched", 0) == 1)
+            if (PlayerPrefs.GetInt("WuMenLevelIntroWatched", 0) == 1)
             {
                 introPlaying = false;
                 if (videoOverlay != null) videoOverlay.SetActive(false);
@@ -151,6 +151,8 @@ namespace JinYanMaoYing
         private void FinishVideo()
         {
             if (videoOverlay == null || !videoOverlay.activeSelf) return;
+            PlayerPrefs.SetInt("WuMenLevelIntroWatched", 1);
+            PlayerPrefs.Save();
             introPlayer.Stop();
             videoOverlay.SetActive(false);
             StartCoroutine(ShowMission());

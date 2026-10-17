@@ -47,7 +47,7 @@ namespace JinYanMaoYing
             PlayerPrefs.DeleteKey("BaoHeDianCleared");
             PlayerPrefs.DeleteKey("TaiHeDianCleared");
             PlayerPrefs.DeleteKey("MapShownRecolorCount");
-            PlayerPrefs.SetInt("WuMenIntroWatched", 0);
+            PlayerPrefs.SetInt("WuMenLevelIntroWatched", 0);
             PlayerPrefs.Save();
             if (openingIntro != null) openingIntro.Play();
             else SceneTransition.Load(Map);
@@ -55,8 +55,6 @@ namespace JinYanMaoYing
 
         public void OpeningIntroFinished()
         {
-            PlayerPrefs.SetInt("WuMenIntroWatched", 1);
-            PlayerPrefs.Save();
             SceneTransition.Load(Map);
         }
         public void OpenWuMen() { SceneTransition.Load(WuMen); }
