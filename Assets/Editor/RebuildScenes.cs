@@ -536,9 +536,9 @@ public static class RebuildScenes
         PalaceMapController controller = new GameObject("地图进度与入口", typeof(PalaceMapController)).GetComponent<PalaceMapController>();
         controller.colorLayers = new GameObject[4];
         controller.colorLayers[0] = Picture(canvas.transform, "午门通关彩色层", mapArt + "午门.png", new Vector2(1920f, 1080f), Vector2.zero).gameObject;
-        controller.colorLayers[1] = Picture(canvas.transform, "乾清宫通关彩色层", mapArt + "乾清宫_彩色.png", new Vector2(1920f, 1080f), Vector2.zero).gameObject;
+        controller.colorLayers[1] = Picture(canvas.transform, "乾清宫通关彩色层", mapArt + "太和殿_彩色.png", new Vector2(1920f, 1080f), Vector2.zero).gameObject;
         controller.colorLayers[2] = Picture(canvas.transform, "保和殿通关彩色层", mapArt + "保和殿_彩色.png", new Vector2(1920f, 1080f), Vector2.zero).gameObject;
-        controller.colorLayers[3] = Picture(canvas.transform, "太和殿通关彩色层", mapArt + "太和殿_彩色.png", new Vector2(1920f, 1080f), Vector2.zero).gameObject;
+        controller.colorLayers[3] = Picture(canvas.transform, "太和殿通关彩色层", mapArt + "乾清宫_彩色.png", new Vector2(1920f, 1080f), Vector2.zero).gameObject;
         controller.completedMap = Picture(canvas.transform, "通关完整彩图", mapArt + "地图_副本.png", new Vector2(1920f, 1080f), Vector2.zero);
         controller.completedMap.preserveAspect = false;
         ColorPanel(canvas.transform, "标题墨色", new Vector2(760f, 124f), new Vector2(0f, 475f), new Color(0.10f, 0.09f, 0.08f, 0.70f));

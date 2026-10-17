@@ -58,6 +58,7 @@ namespace JinYanMaoYing
         private float hintUntil;
         private float animationTime;
         private float idleTime;
+        private float secondJumpPulse;
         private float lastDirectionTapTime = -10f;
         private int lastTapDirection;
         private int facing = 1;
@@ -67,12 +68,25 @@ namespace JinYanMaoYing
         private RenderTexture videoTexture;
         private RawImage relicPreview;
         private RectTransform relicPreviewFrame;
+        private Sprite jumpSprite;
         private const float Floor = -353f;
         private const float HalfCat = 47f;
         private const float Gravity = 1500f;
 
         private void Start()
         {
+            // Exploration uses the complete WuMen running cycle when available.
+            string[] frameNames = { "猫跑1", "猫跑中间帧1", "猫跑中间帧4", "猫跑2",
+                "猫跑中间帧2", "猫跑中间帧5", "猫跑3", "猫跑中间帧3", "猫跑中间帧6" };
+            Sprite[] explorationFrames = new Sprite[frameNames.Length];
+            bool completeCycle = true;
+            for (int i = 0; i < frameNames.Length; i++)
+            {
+                explorationFrames[i] = Resources.Load<Sprite>("TaiHeFinale/" + frameNames[i]);
+                completeCycle &= explorationFrames[i] != null;
+            }
+            if (completeCycle) runFrames = explorationFrames;
+            jumpSprite = Resources.Load<Sprite>("TaiHeFinale/猫跑中间帧2");
             if (ending != null) ending.SetActive(false);
             if (quiz != null) quiz.SetActive(false);
             CreateRelicPreview();
@@ -189,25 +203,9 @@ namespace JinYanMaoYing
             if (Mathf.Abs(input) < 0.1f) sprinting = false;
             if (Mathf.Abs(input) > 0.1f) facing = input < 0f ? -1 : 1;
             float x = old.x + input * (sprinting ? 650f : 390f) * dt;
-            if (catImage != null && runFrames != null && runFrames.Length > 0 && Mathf.Abs(input) > 0.1f)
-            {
-                idleTime = 0f;
-                animationTime += dt * (sprinting ? 16f : 12f);
-                catImage.sprite = runFrames[(int)animationTime % runFrames.Length];
-                catImage.rectTransform.localScale = new Vector3(facing, 1f, 1f);
-            }
-            else if (catImage != null && Mathf.Abs(input) < 0.1f && jumps == 0)
-            {
-                idleTime += dt;
-                if (idleTime > 3.5f && idleSprite != null)
-                {
-                    catImage.sprite = idleSprite;
-                    float breath = 1f + Mathf.Sin(Time.unscaledTime * 2.3f) * 0.018f;
-                    catImage.rectTransform.localScale = new Vector3(facing * breath, breath, 1f);
-                }
-            }
             if ((Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow)) && jumps < 2)
             {
+                if (jumps == 1) secondJumpPulse = 0.18f;
                 verticalSpeed = jumps == 0 ? 720f : 660f;
                 jumps++;
             }
@@ -227,6 +225,7 @@ namespace JinYanMaoYing
                 jumps = 0;
             }
             cat.anchoredPosition = new Vector2(Mathf.Clamp(x, -980f, 980f), y);
+            AnimateCat(dt, Mathf.Abs(input) > 0.1f);
 
             if (Input.GetKeyDown(KeyCode.E)) TryInspect();
             if (x > 943f)
@@ -242,6 +241,36 @@ namespace JinYanMaoYing
             }
             if (Time.time > hintUntil && hint != null)
                 hint.text = RoomHint(currentRoom);
+        }
+
+        private void AnimateCat(float dt, bool moving)
+        {
+            if (catImage == null) return;
+            secondJumpPulse = Mathf.Max(0f, secondJumpPulse - dt);
+            bool airborne = jumps > 0 || Mathf.Abs(verticalSpeed) > 1f;
+            if (airborne)
+            {
+                idleTime = 0f;
+                if (jumpSprite != null) catImage.sprite = jumpSprite;
+                float impulse = secondJumpPulse > 0f ? 1.08f : 1f;
+                cat.localScale = new Vector3(facing * impulse, impulse, 1f);
+                cat.localRotation = Quaternion.Euler(0f, 0f, facing * (secondJumpPulse > 0f ? 22f : 12f));
+                return;
+            }
+            cat.localRotation = Quaternion.identity;
+            if (moving && runFrames != null && runFrames.Length > 0)
+            {
+                idleTime = 0f;
+                animationTime += dt * (sprinting ? 16f : 12f);
+                catImage.sprite = runFrames[(int)animationTime % runFrames.Length];
+                cat.localScale = new Vector3(facing, 1f, 1f);
+                return;
+            }
+            idleTime += dt;
+            if (idleTime > 3.5f && idleSprite != null) catImage.sprite = idleSprite;
+            else if (runFrames != null && runFrames.Length > 0) catImage.sprite = runFrames[0];
+            float breath = 1f + Mathf.Sin(Time.unscaledTime * 2.3f) * 0.018f;
+            cat.localScale = new Vector3(facing * breath, breath, 1f);
         }
 
         private void TryInspect()

@@ -25,11 +25,22 @@ namespace JinYanMaoYing
         private void Start()
         {
             if (colorLayers == null || colorLayers.Length < 4) return;
-            // The extracted color plates overlap neighbouring buildings. Clip each
-            // plate to its own palace so Taihe stays monochrome until its finale.
+            // Older map scenes stored the central Taihe plate in the Qianqing slot
+            // and the north-west Qianqing plate in the Taihe slot.
+            Image qianqing = colorLayers[1].GetComponent<Image>();
+            Image taihe = colorLayers[3].GetComponent<Image>();
+            if (qianqing != null && taihe != null && qianqing.sprite != null && taihe.sprite != null &&
+                qianqing.sprite.name == "乾清宫_彩色" && taihe.sprite.name == "太和殿_彩色")
+            {
+                Sprite plate = qianqing.sprite;
+                qianqing.sprite = taihe.sprite;
+                taihe.sprite = plate;
+            }
+            // Keep each extracted color plate within its own building area.
             ClipColorLayer(0, new Vector2(-450f, -255f), new Vector2(1080f, 570f));
-            ClipColorLayer(1, new Vector2(270f, 40f), new Vector2(650f, 600f));
+            ClipColorLayer(1, new Vector2(-450f, 210f), new Vector2(1050f, 580f));
             ClipColorLayer(2, new Vector2(670f, 180f), new Vector2(580f, 700f));
+            ClipColorLayer(3, new Vector2(270f, 40f), new Vector2(650f, 600f));
             int progress = GameNavigator.TaiHeDianCleared ? 4 : GameNavigator.BaoHeDianCleared ? 3 :
                 GameNavigator.QianQingGongCleared ? 2 : GameNavigator.WuMenCleared ? 1 : 0;
             int shown = Mathf.Clamp(PlayerPrefs.GetInt("MapShownRecolorCount", 0), 0, progress);
