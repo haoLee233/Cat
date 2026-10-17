@@ -89,7 +89,12 @@ namespace JinYanMaoYing
             detailIcon.uvRect = photo != null ? new Rect(0f, 0f, 1f, 1f) : icons[index].uvRect;
             float width = detailIcon.texture.width * detailIcon.uvRect.width;
             float height = detailIcon.texture.height * detailIcon.uvRect.height;
-            float scale = Mathf.Min(410f / width, 350f / height);
+            // Artifact photographs use the inner paper area; the wider beast art
+            // keeps its existing placement and size.
+            bool artifact = index >= 3;
+            detailIcon.rectTransform.anchoredPosition = new Vector2(artifact ? -300f : -375f, 10f);
+            float scale = Mathf.Min((artifact ? 290f : 410f) / width,
+                (artifact ? 300f : 350f) / height);
             detailIcon.rectTransform.sizeDelta = new Vector2(width * scale, height * scale);
             details.SetActive(true);
             if (detailGroup != null)

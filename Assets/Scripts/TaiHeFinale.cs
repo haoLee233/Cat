@@ -23,8 +23,7 @@ namespace JinYanMaoYing
         };
         private readonly int[] requiredTurns = { 1, 3, 2 };
         private readonly bool[] taken = new bool[3], solved = new bool[3];
-        private readonly Texture2D[] scenes = new Texture2D[3], runs = new Texture2D[9];
-        private Texture2D idleTexture;
+        private readonly Texture2D[] scenes = new Texture2D[3], runs = new Texture2D[3];
         private readonly Material[] materials = new Material[3];
         private Texture2D items;
         private RectTransform root, cat;
@@ -33,7 +32,7 @@ namespace JinYanMaoYing
         private CanvasGroup fade;
         private GameObject assembly;
         private int room, carrying = -1, jumps, turns, facing = 1;
-        private float x = -820f, feet = -365f, velocity, animation, hintEnd, idleTime, secondJumpPulse;
+        private float x = -820f, feet = -365f, velocity, animation, hintEnd;
         private bool transitioning, inAssembly, finished;
         private const float Gravity = 1450f;
         private const float HalfCat = 40f;
@@ -63,12 +62,8 @@ namespace JinYanMaoYing
             string[] sceneFiles = { "前庭台基", "檐下修缮架", "正殿内景" };
             for (int i=0;i<3;i++) {
                 scenes[i]=Resources.Load<Texture2D>("TaiHeFinale/"+sceneFiles[i]);
+                runs[i]=Resources.Load<Texture2D>("TaiHeFinale/猫跑"+(i+1));
             }
-            string[] frameNames = { "猫跑1", "猫跑中间帧1", "猫跑中间帧4", "猫跑2",
-                "猫跑中间帧2", "猫跑中间帧5", "猫跑3", "猫跑中间帧3", "猫跑中间帧6" };
-            for (int i=0;i<runs.Length;i++)
-                runs[i]=Resources.Load<Texture2D>("TaiHeFinale/"+frameNames[i]);
-            idleTexture=Resources.Load<Texture2D>("TaiHeFinale/猫待机");
             items=Resources.Load<Texture2D>("TaiHeFinale/复色构件");
             Shader shader=Resources.Load<Shader>("TaiHeReveal");
             if (shader == null || items == null || scenes[0] == null || scenes[1] == null || scenes[2] == null)
@@ -188,10 +183,8 @@ namespace JinYanMaoYing
             float move=Input.GetAxisRaw("Horizontal");
             if(Mathf.Abs(move)>.1f) facing=move<0?-1:1;
             x=Mathf.Clamp(x+move*390f*dt,-970f,970f);
-            bool climbing=Climb(dt);
-            if(!climbing) {
+            if(!Climb(dt)) {
                 if((Input.GetKeyDown(KeyCode.Space)||Input.GetKeyDown(KeyCode.UpArrow))&&jumps<2) {
-                    if(jumps==1) secondJumpPulse=.18f;
                     velocity=jumps==0?685f:630f; jumps++;
                 }
                 if(jumps==0 && Mathf.Abs(oldFeet-Ground(room,oldX))<15f && velocity<=0)
@@ -201,7 +194,10 @@ namespace JinYanMaoYing
                 }
             }
             cat.anchoredPosition=new Vector2(x,feet+HalfCat);
-            AnimateCat(dt,Mathf.Abs(move)>.1f,climbing);
+            cat.localScale=new Vector3(facing,1,1);
+            if(Mathf.Abs(move)>.1f&&runs[0]!=null) {
+                animation+=dt*11f; catArt.texture=runs[(int)animation%3];
+            }
             if(Input.GetKeyDown(KeyCode.E)) Interact();
             if(x>943f||x< -943f) {
                 int next=x>0?room+1:room-1;
@@ -210,31 +206,6 @@ namespace JinYanMaoYing
                 else x=x>0?905f:-905f;
             }
             if(Time.time>hintEnd) hint.text="A/D 移动 · 空格二段跳 · 梯口 ↑/↓ 攀爬 · E 交互";
-        }
-        private void AnimateCat(float dt,bool moving,bool climbing)
-        {
-            secondJumpPulse=Mathf.Max(0f,secondJumpPulse-dt);
-            if(!climbing && (jumps>0 || Mathf.Abs(velocity)>1f)) {
-                if(runs[4]!=null) catArt.texture=runs[4];
-                float impulse=secondJumpPulse>0f?1.08f:1f;
-                cat.localScale=new Vector3(facing*impulse,impulse,1f);
-                cat.localRotation=Quaternion.Euler(0f,0f,facing*(secondJumpPulse>0f?22f:12f));
-                idleTime=0f;
-                return;
-            }
-            cat.localRotation=Quaternion.identity;
-            if(moving && !climbing && runs[0]!=null) {
-                idleTime=0f;
-                animation+=dt*11f;
-                Texture2D frame=runs[(int)animation%runs.Length];
-                catArt.texture=frame!=null?frame:runs[0];
-                cat.localScale=new Vector3(facing,1f,1f);
-                return;
-            }
-            idleTime+=dt;
-            catArt.texture=idleTime>3.5f && idleTexture!=null?idleTexture:runs[0];
-            float breath=1f+Mathf.Sin(Time.unscaledTime*2.3f)*.018f;
-            cat.localScale=new Vector3(facing*breath,breath,1f);
         }
         private bool Climb(float dt)
         {
