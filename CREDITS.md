@@ -1,4 +1,4 @@
-# 午门科普页资料与照片
+# 建筑资料与照片署名
 
 - 午门建筑文字依据：故宫博物院《午门》 https://www.dpm.org.cn/explore/building/236454.html
 - 屋顶走兽文字依据：故宫博物院《走兽》 https://www.dpm.org.cn/lemmas/241413.html
