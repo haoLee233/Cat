@@ -76,6 +76,21 @@ namespace JinYanMaoYing
             if (ending != null) ending.SetActive(false);
             if (quiz != null) quiz.SetActive(false);
             CreateRelicPreview();
+            if (hint != null)
+            {
+                hint.font = Font.CreateDynamicFontFromOSFont("Microsoft YaHei", 32);
+                hint.fontSize = 30;
+                hint.horizontalOverflow = HorizontalWrapMode.Wrap;
+                hint.verticalOverflow = VerticalWrapMode.Truncate;
+                hint.rectTransform.sizeDelta = new Vector2(1500f, 104f);
+                hint.rectTransform.anchoredPosition = new Vector2(0f, -457f);
+                Transform backing = hint.transform.parent.Find("底部提示底色");
+                if (backing is RectTransform backingRect)
+                {
+                    backingRect.sizeDelta = new Vector2(1580f, 124f);
+                    backingRect.anchoredPosition = new Vector2(0f, -457f);
+                }
+            }
             quizTitle.fontSize = Mathf.Max(quizTitle.fontSize, 54);
             quizQuestion.fontSize = Mathf.Max(quizQuestion.fontSize, 40);
             quizFeedback.fontSize = Mathf.Max(quizFeedback.fontSize, 36);
@@ -88,7 +103,7 @@ namespace JinYanMaoYing
             cat.anchoredPosition = new Vector2(-760f, Floor + HalfCat);
             if (catImage != null) catImage.preserveAspect = true;
             ShowRoom(0);
-            SetHint("A/D 移动，连按同一方向奔跑 · 空格二段跳 · 靠近器物按 E", 8f);
+            SetHint("按键盘 A、D 键左右移动；按空格键跳跃。\n走近发光的器物后，按键盘 E 键查看。", 8f);
             if (introClip == null || introPlayer == null || videoScreen == null || videoOverlay == null)
             {
                 Debug.LogError("乾清宫第二段片头视频未配置");
@@ -226,8 +241,7 @@ namespace JinYanMaoYing
                 else cat.anchoredPosition = new Vector2(-920f, y);
             }
             if (Time.time > hintUntil && hint != null)
-                hint.text = currentRoom == 3 ? "向右走到殿门，完成工匠识物考验" :
-                    "连按同一方向奔跑 · 走到边缘换区 · 靠近器物按 E 查阅";
+                hint.text = RoomHint(currentRoom);
         }
 
         private void TryInspect()
@@ -236,7 +250,7 @@ namespace JinYanMaoYing
             if (currentRoom >= found.Length || found[currentRoom] || room.relic == null) return;
             if (Vector2.Distance(cat.anchoredPosition, room.relic.anchoredPosition) > 160f)
             {
-                SetHint("走近「" + relicNames[currentRoom] + "」后按 E。", 2.5f);
+                SetHint("先走近发光的「" + relicNames[currentRoom] + "」，再按键盘 E 键查看。", 2.5f);
                 return;
             }
             OpenQuiz(currentRoom);
@@ -399,6 +413,15 @@ namespace JinYanMaoYing
                 mapNodes[i].color = i == index ? new Color(0.70f, 0.31f, 0.22f) :
                     i < found.Length && found[i] ? new Color(0.72f, 0.56f, 0.31f) : new Color(0.35f, 0.31f, 0.27f);
             UpdateStatus();
+            if (index > 0) SetHint(RoomHint(index), 9f);
+        }
+
+        private static string RoomHint(int index)
+        {
+            if (index == 1) return "一直往右走，沿石阶登上高台。\n走近发光的嘉量，按键盘 E 键查看。";
+            if (index == 2) return "走到石地上的日晷旁，按键盘 E 键查看。\n继续往右走，可以进入正殿。";
+            if (index == 3) return "三件器物都看过后，走到画面最右边，完成最后一题。";
+            return "按键盘 A、D 键左右移动；按空格键跳跃。\n走近发光的铜鹤，按键盘 E 键查看。";
         }
 
         private void UpdateStatus()

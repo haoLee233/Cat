@@ -58,7 +58,7 @@ namespace JinYanMaoYing
         private int health = 3;
         private bool finished, paused, introPlaying = true;
         private bool ducking;
-        private bool lionTutorialSeen, lanternTutorialSeen;
+        private bool lionTutorialSeen, lanternTutorialSeen, beastTutorialSeen;
         private SpawnedItem tutorialItem;
         private GameObject tutorialOverlay;
         private Text tutorialTitle, tutorialBody, tutorialAction;
@@ -220,10 +220,11 @@ namespace JinYanMaoYing
                 Vector2 position = item.rect.anchoredPosition + Vector2.left * speed * dt;
                 if (item.kind == 1) position.y = item.baseY + Mathf.Sin(elapsed * 3.4f + item.phase) * 16f;
                 item.rect.anchoredPosition = position;
-                if (item.kind == 2 && position.x > catX && position.x - catX <= TutorialTriggerDistance &&
-                    (item.lantern ? !lanternTutorialSeen : !lionTutorialSeen) && tutorialOverlay != null)
+                if ((item.kind == 1 && !beastTutorialSeen ||
+                    item.kind == 2 && (item.lantern ? !lanternTutorialSeen : !lionTutorialSeen)) &&
+                    position.x > catX && position.x - catX <= TutorialTriggerDistance && tutorialOverlay != null)
                 {
-                    ShowObstacleTutorial(item);
+                    ShowItemTutorial(item);
                     return;
                 }
                 float dx = Mathf.Abs(item.rect.anchoredPosition.x - catX);
@@ -296,7 +297,7 @@ namespace JinYanMaoYing
         private void CreateObstacleTutorial()
         {
             Canvas canvas = playArea != null ? playArea.GetComponentInParent<Canvas>() : null;
-            Font font = hintText != null ? hintText.font : statusText != null ? statusText.font : null;
+            Font font = Font.CreateDynamicFontFromOSFont("Microsoft YaHei", 38);
             if (canvas == null || font == null)
             {
                 Debug.LogWarning("午门障碍教学缺少 Canvas 或字体，跳过首次引导。");
@@ -364,11 +365,11 @@ namespace JinYanMaoYing
             previewEdge.effectDistance = new Vector2(5f, -5f);
 
             Color ink = new Color(0.18f, 0.12f, 0.09f, 1f);
-            tutorialTitle = CreateTutorialText(scroll.transform, "障碍名称", font, 62,
+            tutorialTitle = CreateTutorialText(scroll.transform, "物件名称", font, 50,
                 new Vector2(240f, 177f), new Vector2(650f, 80f), ink);
-            tutorialBody = CreateTutorialText(scroll.transform, "操作说明", font, 41,
+            tutorialBody = CreateTutorialText(scroll.transform, "操作说明", font, 36,
                 new Vector2(240f, 0f), new Vector2(670f, 165f), ink);
-            tutorialAction = CreateTutorialText(scroll.transform, "继续提示", font, 36,
+            tutorialAction = CreateTutorialText(scroll.transform, "继续提示", font, 34,
                 new Vector2(240f, -183f), new Vector2(660f, 70f), new Color(0.48f, 0.16f, 0.10f, 1f));
             tutorialOverlay.SetActive(false);
         }
@@ -393,10 +394,18 @@ namespace JinYanMaoYing
             return label;
         }
 
-        private void ShowObstacleTutorial(SpawnedItem item)
+        private void ShowItemTutorial(SpawnedItem item)
         {
             tutorialItem = item;
-            if (item.lantern)
+            if (item.kind == 1)
+            {
+                beastTutorialSeen = true;
+                tutorialTitle.text = "收集发光脊兽";
+                tutorialBody.text = "这只脊兽需要收集。\n按空格键跳起，碰到它就能带它回家。";
+                tutorialAction.text = "按空格键跳起，触碰脊兽";
+                tutorialPreview.sprite = beastSprites[item.beastIndex];
+            }
+            else if (item.lantern)
             {
                 lanternTutorialSeen = true;
                 tutorialTitle.text = "宫灯低垂";
@@ -429,7 +438,7 @@ namespace JinYanMaoYing
                 AnimateCat(dt, jumpHeight > 0f);
                 return;
             }
-            if (tutorialItem.lantern)
+            if (tutorialItem.kind == 2 && tutorialItem.lantern)
             {
                 if (!Input.GetKey(KeyCode.DownArrow)) return;
                 ducking = true;
@@ -513,7 +522,7 @@ namespace JinYanMaoYing
         private void RefreshStatus()
         {
             if (statusText != null) statusText.text = "脊兽 " + beasts + "/3     金币 " + coins + "     得分 " + (coins * 20) + "     体力 " + health;
-            if (hintText != null) hintText.text = "石狮：跳跃（可二段跳）   宫灯：按住↓蹲下   发光脊兽：收集";
+            if (hintText != null) hintText.text = "按空格跳过石狮 · 按住↓钻过宫灯 · 跳起触碰发光脊兽";
         }
 
         private void Finish(bool win)
