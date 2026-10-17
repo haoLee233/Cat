@@ -57,6 +57,7 @@ namespace JinYanMaoYing
         private int jumpsUsed, coins, beasts, spawnCount, runFrameIndex;
         private int health = 3;
         private bool finished, paused, introPlaying = true;
+        private bool videoFinishing;
         private bool ducking;
         private bool lionTutorialSeen, lanternTutorialSeen, beastTutorialSeen;
         private SpawnedItem tutorialItem;
@@ -139,8 +140,37 @@ namespace JinYanMaoYing
 
         private void OnVideoPrepared(VideoPlayer player)
         {
-            if (videoOverlay != null && videoOverlay.activeSelf) player.Play();
+            if (videoOverlay != null && videoOverlay.activeSelf)
+            {
+                SetIntroAudioVolume(player, 1f);
+                player.Play();
+                StartCoroutine(FadeIntroAudioAtEnd(player));
+            }
         }
+
+        private IEnumerator FadeIntroAudioAtEnd(VideoPlayer player)
+        {
+            const double fadeDuration = 1.5;
+            while (player != null && player.clip != null && !videoFinishing &&
+                videoOverlay != null && videoOverlay.activeSelf)
+            {
+                if (player.isPlaying)
+                {
+                    double remaining = player.clip.length - player.time;
+                    if (remaining <= fadeDuration)
+                        SetIntroAudioVolume(player, Mathf.Clamp01((float)(remaining / fadeDuration)));
+                }
+                yield return null;
+            }
+        }
+
+        private static void SetIntroAudioVolume(VideoPlayer player, float volume)
+        {
+            if (player == null || player.audioOutputMode != VideoAudioOutputMode.Direct) return;
+            for (ushort track = 0; track < player.audioTrackCount; track++)
+                player.SetDirectAudioVolume(track, volume);
+        }
+
         private void OnVideoFinished(VideoPlayer player) { FinishVideo(); }
         private void OnVideoError(VideoPlayer player, string message)
         {
@@ -150,15 +180,56 @@ namespace JinYanMaoYing
 
         private void FinishVideo()
         {
-            if (videoOverlay == null || !videoOverlay.activeSelf) return;
+            if (videoFinishing || videoOverlay == null || !videoOverlay.activeSelf) return;
+            videoFinishing = true;
             PlayerPrefs.SetInt("WuMenLevelIntroWatched", 1);
             PlayerPrefs.Save();
-            introPlayer.Stop();
-            videoOverlay.SetActive(false);
-            StartCoroutine(ShowMission());
+            SetIntroAudioVolume(introPlayer, 0f);
+            StartCoroutine(TransitionFromVideo());
         }
 
         public void SkipVideo() { FinishVideo(); }
+
+        private IEnumerator TransitionFromVideo()
+        {
+            Transform canvas = videoOverlay.transform.parent;
+            GameObject curtain = new GameObject("午门CG黑屏过渡", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            curtain.transform.SetParent(canvas, false);
+            curtain.transform.SetAsLastSibling();
+            RectTransform curtainRect = curtain.GetComponent<RectTransform>();
+            curtainRect.anchorMin = Vector2.zero;
+            curtainRect.anchorMax = Vector2.one;
+            curtainRect.offsetMin = curtainRect.offsetMax = Vector2.zero;
+            Image curtainImage = curtain.GetComponent<Image>();
+            curtainImage.color = new Color(0f, 0f, 0f, 0f);
+            curtainImage.raycastTarget = true;
+
+            const float transitionDuration = 0.65f;
+            for (float time = 0f; time < transitionDuration; time += Time.unscaledDeltaTime)
+            {
+                float progress = Mathf.Clamp01(time / transitionDuration);
+                Color color = curtainImage.color;
+                color.a = Mathf.SmoothStep(0f, 1f, progress);
+                curtainImage.color = color;
+                yield return null;
+            }
+
+            curtainImage.color = Color.black;
+            introPlayer.Stop();
+            videoOverlay.SetActive(false);
+
+            for (float time = 0f; time < transitionDuration; time += Time.unscaledDeltaTime)
+            {
+                float progress = Mathf.Clamp01(time / transitionDuration);
+                Color color = curtainImage.color;
+                color.a = 1f - Mathf.SmoothStep(0f, 1f, progress);
+                curtainImage.color = color;
+                yield return null;
+            }
+
+            Destroy(curtain);
+            StartCoroutine(ShowMission());
+        }
 
         private IEnumerator ShowMission()
         {
