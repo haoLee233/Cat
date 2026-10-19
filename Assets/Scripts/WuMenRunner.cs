@@ -56,6 +56,7 @@ namespace JinYanMaoYing
         private float catX = CatStartX, forwardImpulse;
         private int jumpsUsed, coins, beasts, spawnCount, runFrameIndex;
         private int health = 3;
+        private AudioSource runAudioSource;
         private bool finished, paused, introPlaying = true;
         private bool videoFinishing;
         private bool ducking;
@@ -78,6 +79,17 @@ namespace JinYanMaoYing
         private void Start()
         {
             Time.timeScale = 1f;
+            AudioClip runClip = Resources.Load<AudioClip>("Audio/Cat_Run");
+            if (runClip != null)
+            {
+                runAudioSource = gameObject.AddComponent<AudioSource>();
+                runAudioSource.clip = runClip;
+                runAudioSource.loop = true;
+                runAudioSource.playOnAwake = false;
+                runAudioSource.spatialBlend = 0f;
+                runAudioSource.pitch = 1f;
+                runAudioSource.volume = 0.65f;
+            }
             if (cat != null) catRestRotation = cat.localRotation;
             if (resultPanel != null) resultPanel.SetActive(false);
             if (rankImage != null) rankImage.gameObject.SetActive(false);
@@ -257,8 +269,17 @@ namespace JinYanMaoYing
 
         private void Update()
         {
-            if (finished || paused || introPlaying) return;
-            if (tutorialItem != null) { HandleTutorialInput(); return; }
+            if (finished || paused || introPlaying)
+            {
+                SetRunAudio(false);
+                return;
+            }
+            if (tutorialItem != null)
+            {
+                SetRunAudio(false);
+                HandleTutorialInput();
+                return;
+            }
             float dt = Time.deltaTime;
             elapsed += dt;
             MoveBackground(dt);
@@ -280,6 +301,7 @@ namespace JinYanMaoYing
             jumpHeight = Mathf.Max(0f, jumpHeight + verticalSpeed * dt);
             if (jumpHeight <= 0f) { verticalSpeed = 0f; jumpsUsed = 0; }
             cat.anchoredPosition = new Vector2(catX, GroundY + jumpHeight);
+            SetRunAudio(jumpHeight <= 0.01f && verticalSpeed <= 0f && !ducking);
 
             if (elapsed >= nextSpawn)
             {
@@ -324,6 +346,19 @@ namespace JinYanMaoYing
                     Destroy(item.rect.gameObject);
                     items.RemoveAt(i);
                 }
+            }
+        }
+
+        private void SetRunAudio(bool shouldPlay)
+        {
+            if (runAudioSource == null) return;
+            if (shouldPlay)
+            {
+                if (!runAudioSource.isPlaying) runAudioSource.Play();
+            }
+            else if (runAudioSource.isPlaying)
+            {
+                runAudioSource.Stop();
             }
         }
 
@@ -601,6 +636,7 @@ namespace JinYanMaoYing
         private void Finish(bool win)
         {
             finished = true;
+            SetRunAudio(false);
             if (win) GameNavigator.WuMenCleared = true;
             if (resultPanel != null) resultPanel.SetActive(true);
             if (resultText != null) resultText.text = win ? "午门已通关\n脊兽已归位" : "旅途暂歇\n再试一次吧";
@@ -672,6 +708,7 @@ namespace JinYanMaoYing
         {
             if (introPlaying || finished || paused) return;
             paused = true;
+            SetRunAudio(false);
             if (settingsPanel != null) settingsPanel.SetActive(true);
         }
 

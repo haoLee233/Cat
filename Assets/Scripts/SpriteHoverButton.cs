@@ -20,6 +20,8 @@ namespace JinYanMaoYing
             rect = GetComponent<RectTransform>();
             home = rect.anchoredPosition;
             if (normal != null) image.sprite = normal;
+            if (GetComponent<Button>() != null && GetComponent<UIButtonClickSound>() == null)
+                gameObject.AddComponent<UIButtonClickSound>();
         }
 
         public void OnPointerEnter(PointerEventData eventData)
