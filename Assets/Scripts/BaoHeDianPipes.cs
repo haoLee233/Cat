@@ -136,14 +136,15 @@ namespace JinYanMaoYing
             if (retryButton != null) retryButton.SetActive(!won);
             foreach (Button tile in tiles) if (tile != null) tile.interactable = false;
             if (resultPanel != null) resultPanel.SetActive(true);
-            if (resultText != null) resultText.text = won ? "殿宇营造图已复原\n保和殿重新有了颜色" : "时间已到\n再试一次吧";
+            if (resultText != null) resultText.text = won ? "殿宇营造图已复原\n将它带回保和殿" : "时间已到\n再试一次吧";
             if (won) StartCoroutine(OpenKnowledgeAfterResult());
         }
 
         private IEnumerator OpenKnowledgeAfterResult()
         {
-            yield return new WaitForSecondsRealtime(4f);
-            SceneTransition.Load(GameNavigator.BaoHeKnowledge);
+            yield return new WaitForSecondsRealtime(2.4f);
+            BaoHeEntranceController.PendingRecolor = true;
+            SceneTransition.Load(GameNavigator.BaoHeEntrance);
         }
 
         public void Restart() { SceneTransition.Load(GameNavigator.BaoHeDian); }

@@ -11,6 +11,7 @@ namespace JinYanMaoYing
         public const string Map = "故宫地图";
         public const string WuMen = "午门追逐";
         public const string BaoHeDian = "保和殿水管";
+        public const string BaoHeEntrance = "保和殿前庭";
         public const string WuMenKnowledge = "午门营造录";
         public const string QianQingGong = "乾清宫";
         public const string QianQingKnowledge = "乾清宫营造录";
@@ -45,6 +46,7 @@ namespace JinYanMaoYing
             PlayerPrefs.DeleteKey("WuMenCleared");
             PlayerPrefs.DeleteKey("QianQingGongCleared");
             PlayerPrefs.DeleteKey("BaoHeDianCleared");
+            PlayerPrefs.DeleteKey("BaoHeReturnForRecolor");
             PlayerPrefs.DeleteKey("TaiHeDianCleared");
             PlayerPrefs.DeleteKey("MapShownRecolorCount");
             PlayerPrefs.SetInt("WuMenLevelIntroWatched", 0);
@@ -58,7 +60,7 @@ namespace JinYanMaoYing
             SceneTransition.Load(Map);
         }
         public void OpenWuMen() { SceneTransition.Load(WuMen); }
-        public void OpenBaoHeDian() { SceneTransition.Load(BaoHeDian); }
+        public void OpenBaoHeDian() { SceneTransition.Load(BaoHeEntrance); }
         public void OpenWuMenKnowledge() { SceneTransition.Load(WuMenKnowledge); }
         public void OpenQianQingKnowledge() { SceneTransition.Load(QianQingKnowledge); }
         public void OpenEnding() { SceneTransition.Load(Ending); }
