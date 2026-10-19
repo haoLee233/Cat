@@ -486,6 +486,7 @@ public static class RebuildScenes
         hover.normal = image.sprite;
         hover.highlighted = string.IsNullOrEmpty(hoverPath) ? null : AssetDatabase.LoadAssetAtPath<Sprite>(hoverPath);
         hover.lift = lift;
+        image.gameObject.AddComponent<UIButtonClickSound>();
         if (!string.IsNullOrEmpty(hoverPath) && hover.highlighted == null)
             throw new Exception("缺少按钮高亮图片: " + hoverPath);
         return button;

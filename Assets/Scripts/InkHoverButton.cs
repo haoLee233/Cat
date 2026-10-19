@@ -23,7 +23,11 @@ namespace JinYanMaoYing
             homeBackground = background != null ? background.color : Color.white;
             homeScale = transform.localScale;
             Button button = GetComponent<Button>();
-            if (button != null) button.transition = Selectable.Transition.None;
+            if (button != null)
+            {
+                button.transition = Selectable.Transition.None;
+                if (GetComponent<UIButtonClickSound>() == null) gameObject.AddComponent<UIButtonClickSound>();
+            }
             border = GetComponent<Outline>();
             if (border == null) border = gameObject.AddComponent<Outline>();
             border.effectDistance = new Vector2(2f, -2f);
