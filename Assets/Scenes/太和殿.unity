@@ -1331,6 +1331,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clip: {fileID: 32900000, guid: 56d6a4ed9e409f947abb061124c85f56, type: 3}
+  cutsceneAmbience: {fileID: 8300000, guid: e1bfa10d45324a7fa88cceb6c7483a21, type: 3}
+  cutsceneAmbienceVolume: 0.45
   buttonFont: {fileID: 12800000, guid: 5a16943c8c5604d42ac6b17125bb4f7d, type: 3}
 --- !u!1 &1112460959
 GameObject:

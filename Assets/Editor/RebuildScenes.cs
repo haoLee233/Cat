@@ -1174,6 +1174,7 @@ public static class RebuildScenes
         TaiHeFinale game = new GameObject("太和殿终章控制", typeof(TaiHeFinale)).GetComponent<TaiHeFinale>();
         game.introVideo = game.gameObject.AddComponent<LevelIntroVideo>();
         game.introVideo.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/第四CG.m4v");
+        game.introVideo.cutsceneAmbience = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Resources/Audio/TaiHe_CG_Ambience.wav");
         game.introVideo.buttonFont = font;
         if (game.introVideo.clip == null) throw new Exception("缺少太和殿第四段CG");
         Button back = ActionButton(canvas.transform, "返回地图", "返回地图", new Vector2(235f, 74f), new Vector2(805f, 450f));

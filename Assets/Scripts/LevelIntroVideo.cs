@@ -9,6 +9,8 @@ namespace JinYanMaoYing
     public sealed class LevelIntroVideo : MonoBehaviour
     {
         public VideoClip clip;
+        public AudioClip cutsceneAmbience;
+        [Range(0f, 1f)] public float cutsceneAmbienceVolume = 0.45f;
         public Font buttonFont;
         public bool playOnStart = true;
         public string skipLabel = "跳过片头";
@@ -16,6 +18,7 @@ namespace JinYanMaoYing
         public bool IsPlaying { get; private set; }
 
         private VideoPlayer player;
+        private AudioSource ambienceSource;
         private RenderTexture texture;
         private GameObject overlay;
 
@@ -138,7 +141,35 @@ namespace JinYanMaoYing
             if (IsPlaying && player != null && !player.isPrepared) Finish();
         }
 
-        private void OnPrepared(VideoPlayer source) { if (IsPlaying) source.Play(); }
+        private void OnPrepared(VideoPlayer source)
+        {
+            if (!IsPlaying) return;
+            source.Play();
+            if (cutsceneAmbience == null) return;
+            ambienceSource = gameObject.AddComponent<AudioSource>();
+            ambienceSource.clip = cutsceneAmbience;
+            ambienceSource.loop = true;
+            ambienceSource.playOnAwake = false;
+            ambienceSource.spatialBlend = 0f;
+            ambienceSource.volume = cutsceneAmbienceVolume;
+            ambienceSource.Play();
+            StartCoroutine(FadeAmbienceAtEnd(source));
+        }
+
+        private IEnumerator FadeAmbienceAtEnd(VideoPlayer source)
+        {
+            const double fadeDuration = 1.5;
+            while (IsPlaying && source != null && source.clip != null)
+            {
+                if (source.isPlaying)
+                {
+                    double remaining = source.clip.length - source.time;
+                    if (remaining <= fadeDuration)
+                        ambienceSource.volume = cutsceneAmbienceVolume * Mathf.Clamp01((float)(remaining / fadeDuration));
+                }
+                yield return null;
+            }
+        }
         private void OnFinished(VideoPlayer source) { Finish(); }
         private void OnError(VideoPlayer source, string message)
         {
@@ -151,6 +182,7 @@ namespace JinYanMaoYing
             if (!IsPlaying) return;
             IsPlaying = false;
             if (player != null) player.Stop();
+            if (ambienceSource != null) ambienceSource.Stop();
             if (overlay != null) overlay.SetActive(false);
             if (onFinished != null) onFinished.Invoke();
         }
@@ -158,6 +190,7 @@ namespace JinYanMaoYing
         private void OnDestroy()
         {
             if (overlay != null) Destroy(overlay);
+            if (ambienceSource != null) Destroy(ambienceSource);
             if (player != null)
             {
                 player.prepareCompleted -= OnPrepared;
