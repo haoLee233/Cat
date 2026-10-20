@@ -57,6 +57,8 @@ namespace JinYanMaoYing
         private int jumpsUsed, coins, beasts, spawnCount, runFrameIndex;
         private int health = 3;
         private AudioSource runAudioSource;
+        private AudioSource pickupAudioSource;
+        private AudioClip coinPickupClip, stonePickupClip, damageClip, jumpClip, landingClip;
         private bool finished, paused, introPlaying = true;
         private bool videoFinishing;
         private bool ducking;
@@ -79,6 +81,19 @@ namespace JinYanMaoYing
         private void Start()
         {
             Time.timeScale = 1f;
+            coinPickupClip = Resources.Load<AudioClip>("Audio/Coin_Pickup");
+            stonePickupClip = Resources.Load<AudioClip>("Audio/Stone_Pickup");
+            damageClip = Resources.Load<AudioClip>("Audio/Damage_Hit");
+            jumpClip = Resources.Load<AudioClip>("Audio/Jump_Takeoff");
+            landingClip = Resources.Load<AudioClip>("Audio/Jump_Land");
+            if (coinPickupClip != null || stonePickupClip != null || damageClip != null ||
+                jumpClip != null || landingClip != null)
+            {
+                pickupAudioSource = gameObject.AddComponent<AudioSource>();
+                pickupAudioSource.playOnAwake = false;
+                pickupAudioSource.spatialBlend = 0f;
+                pickupAudioSource.volume = 0.82f;
+            }
             AudioClip runClip = Resources.Load<AudioClip>("Audio/Cat_Run");
             if (runClip != null)
             {
@@ -294,11 +309,14 @@ namespace JinYanMaoYing
             {
                 verticalSpeed = jumpsUsed == 0 ? 840f : 780f;
                 jumpsUsed++;
+                PlayEffectSound(jumpClip, 0.80f);
             }
             ducking = Input.GetKey(KeyCode.DownArrow) && jumpHeight <= 0.01f;
             AnimateCat(dt, jumpHeight > 0.01f || verticalSpeed > 0f);
+            bool wasAirborne = jumpHeight > 0.01f;
             verticalSpeed -= 2100f * dt;
             jumpHeight = Mathf.Max(0f, jumpHeight + verticalSpeed * dt);
+            if (wasAirborne && jumpHeight <= 0.01f) PlayEffectSound(landingClip, 0.88f);
             if (jumpHeight <= 0f) { verticalSpeed = 0f; jumpsUsed = 0; }
             cat.anchoredPosition = new Vector2(catX, GroundY + jumpHeight);
             SetRunAudio(jumpHeight <= 0.01f && verticalSpeed <= 0f && !ducking);
@@ -332,9 +350,24 @@ namespace JinYanMaoYing
                 float halfWidth = item.kind != 2 ? 85f : (item.lantern ? LanternHitHalfWidth : LionHitHalfWidth);
                 if (dx < halfWidth && dy < (catHeight + itemHeight) * 0.5f)
                 {
-                    if (item.kind == 0) { coins++; forwardImpulse = Mathf.Min(400f, forwardImpulse + 28f); }
-                    else if (item.kind == 1 && item.beastIndex == beasts) { beasts++; forwardImpulse = Mathf.Min(400f, forwardImpulse + 110f); }
-                    else { health--; forwardImpulse = Mathf.Max(-50f, forwardImpulse - 105f); }
+                    if (item.kind == 0)
+                    {
+                        coins++;
+                        PlayEffectSound(coinPickupClip, 0.82f);
+                        forwardImpulse = Mathf.Min(400f, forwardImpulse + 28f);
+                    }
+                    else if (item.kind == 1 && item.beastIndex == beasts)
+                    {
+                        beasts++;
+                        PlayEffectSound(stonePickupClip, 0.92f);
+                        forwardImpulse = Mathf.Min(400f, forwardImpulse + 110f);
+                    }
+                    else
+                    {
+                        health--;
+                        PlayEffectSound(damageClip, 0.95f);
+                        forwardImpulse = Mathf.Max(-50f, forwardImpulse - 105f);
+                    }
                     Destroy(item.rect.gameObject);
                     items.RemoveAt(i);
                     RefreshStatus();
@@ -360,6 +393,12 @@ namespace JinYanMaoYing
             {
                 runAudioSource.Stop();
             }
+        }
+
+        private void PlayEffectSound(AudioClip clip, float volume)
+        {
+            if (pickupAudioSource != null && clip != null)
+                pickupAudioSource.PlayOneShot(clip, volume);
         }
 
         private void MoveBackground(float dt)
@@ -539,8 +578,10 @@ namespace JinYanMaoYing
             if (jumpHeight > 0f)
             {
                 float dt = Time.deltaTime;
+                bool wasAirborne = jumpHeight > 0.01f;
                 verticalSpeed -= 2100f * dt;
                 jumpHeight = Mathf.Max(0f, jumpHeight + verticalSpeed * dt);
+                if (wasAirborne && jumpHeight <= 0.01f) PlayEffectSound(landingClip, 0.88f);
                 if (jumpHeight <= 0f) { verticalSpeed = 0f; jumpsUsed = 0; }
                 cat.anchoredPosition = new Vector2(catX, GroundY + jumpHeight);
                 AnimateCat(dt, jumpHeight > 0f);
@@ -558,6 +599,7 @@ namespace JinYanMaoYing
                     !Input.GetMouseButtonDown(0)) return;
                 verticalSpeed = 840f;
                 jumpsUsed = 1;
+                PlayEffectSound(jumpClip, 0.80f);
             }
             tutorialOverlay.SetActive(false);
             tutorialItem = null;
