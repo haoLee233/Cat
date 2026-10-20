@@ -29,10 +29,10 @@ namespace JinYanMaoYing
 
             instance = this;
             DontDestroyOnLoad(gameObject);
-            AudioClip music = Resources.Load<AudioClip>("Audio/Game_BGM");
+            AudioClip music = Resources.Load<AudioClip>("Audio/GaoShanLiuShui_Game_BGM");
             if (music == null)
             {
-                Debug.LogError("缺少全局背景音乐 Resources/Audio/Game_BGM");
+                Debug.LogError("缺少全局背景音乐 Resources/Audio/GaoShanLiuShui_Game_BGM");
                 return;
             }
 

@@ -70,7 +70,9 @@ namespace JinYanMaoYing
         private bool introPlaying = true;
         private AudioSource runAudioSource;
         private AudioSource effectAudioSource;
-        private AudioClip jumpClip, landingClip, interactionClip;
+        private AudioSource introBgmSource;
+        private AudioSource clearBgmSource;
+        private AudioClip jumpClip, landingClip, interactionClip, introBgmClip, clearBgmClip;
         private Quaternion catRestRotation;
         private RenderTexture videoTexture;
         private RawImage relicPreview;
@@ -135,6 +137,26 @@ namespace JinYanMaoYing
                 effectAudioSource.spatialBlend = 0f;
                 effectAudioSource.volume = 0.82f;
             }
+            introBgmClip = Resources.Load<AudioClip>("Audio/QianQing_CG_Opening_BGM");
+            if (introBgmClip != null)
+            {
+                introBgmSource = gameObject.AddComponent<AudioSource>();
+                introBgmSource.clip = introBgmClip;
+                introBgmSource.loop = true;
+                introBgmSource.playOnAwake = false;
+                introBgmSource.spatialBlend = 0f;
+                introBgmSource.volume = 0.34f;
+            }
+            clearBgmClip = Resources.Load<AudioClip>("Audio/QianQing_CG_Clear_BGM");
+            if (clearBgmClip != null)
+            {
+                clearBgmSource = gameObject.AddComponent<AudioSource>();
+                clearBgmSource.clip = clearBgmClip;
+                clearBgmSource.loop = true;
+                clearBgmSource.playOnAwake = false;
+                clearBgmSource.spatialBlend = 0f;
+                clearBgmSource.volume = 0.30f;
+            }
             ShowRoom(0);
             SetHint("按键盘 A、D 键左右移动；按空格键跳跃。\n走近发光的器物后，按键盘 E 键查看。", 8f);
             if (introClip == null || introPlayer == null || videoScreen == null || videoOverlay == null)
@@ -175,7 +197,31 @@ namespace JinYanMaoYing
             }
         }
 
-        private void OnVideoPrepared(VideoPlayer player) { if (introPlaying) player.Play(); }
+        private void OnVideoPrepared(VideoPlayer player)
+        {
+            if (!introPlaying) return;
+            player.Play();
+            if (introBgmSource != null)
+            {
+                introBgmSource.Play();
+                StartCoroutine(FadeIntroBgmAtEnd(player));
+            }
+        }
+
+        private IEnumerator FadeIntroBgmAtEnd(VideoPlayer player)
+        {
+            const double fadeDuration = 1.5;
+            while (introPlaying && player != null && player.clip != null)
+            {
+                if (player.isPlaying)
+                {
+                    double remaining = player.clip.length - player.time;
+                    if (remaining <= fadeDuration)
+                        introBgmSource.volume = 0.34f * Mathf.Clamp01((float)(remaining / fadeDuration));
+                }
+                yield return null;
+            }
+        }
         private void OnVideoFinished(VideoPlayer player) { FinishVideo(); }
         private void OnVideoError(VideoPlayer player, string message)
         {
@@ -187,6 +233,7 @@ namespace JinYanMaoYing
             if (!introPlaying) return;
             introPlaying = false;
             if (introPlayer != null) introPlayer.Stop();
+            if (introBgmSource != null) introBgmSource.Stop();
             if (videoOverlay != null) videoOverlay.SetActive(false);
         }
         public void SkipVideo() { FinishVideo(); }
@@ -444,8 +491,28 @@ namespace JinYanMaoYing
         {
             GameNavigator.QianQingGongCleared = true;
             if (ending != null) ending.SetActive(true);
+            if (clearBgmSource != null)
+            {
+                clearBgmSource.volume = 0.30f;
+                clearBgmSource.Play();
+                StartCoroutine(FadeClearBgmBeforeTransition());
+            }
             SetHint("三处器物已查阅；墨宝找回了匠人的尺度与时间，乾清宫重现色彩。", 6f);
             StartCoroutine(OpenKnowledgeAfterResult());
+        }
+
+        private IEnumerator FadeClearBgmBeforeTransition()
+        {
+            yield return new WaitForSecondsRealtime(2.65f);
+            const float fadeDuration = 1.25f;
+            float elapsed = 0f;
+            while (elapsed < fadeDuration && clearBgmSource != null)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                clearBgmSource.volume = 0.30f * (1f - Mathf.Clamp01(elapsed / fadeDuration));
+                yield return null;
+            }
+            if (clearBgmSource != null) clearBgmSource.Stop();
         }
 
         private IEnumerator OpenKnowledgeAfterResult()

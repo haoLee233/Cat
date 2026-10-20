@@ -13,12 +13,26 @@ namespace JinYanMaoYing
         public Font buttonFont;
 
         private VideoPlayer player;
+        private AudioSource endingMusicSource;
+        private const float EndingMusicVolume = 0.30f;
         private RenderTexture videoTexture;
         private GameObject videoOverlay;
         private bool videoFinished;
 
         private void Start()
         {
+            AudioClip endingMusic = Resources.Load<AudioClip>("Audio/Scene_Ending_BGM");
+            if (endingMusic != null)
+            {
+                endingMusicSource = gameObject.AddComponent<AudioSource>();
+                endingMusicSource.clip = endingMusic;
+                endingMusicSource.loop = true;
+                endingMusicSource.playOnAwake = false;
+                endingMusicSource.spatialBlend = 0f;
+                endingMusicSource.volume = EndingMusicVolume;
+            }
+            else Debug.LogWarning("片尾配乐未找到: Audio/Scene_Ending_BGM");
+
             if (monochromeMap == null || story == null) return;
             monochromeMap.alpha = 1f;
             monochromeMap.blocksRaycasts = false;
@@ -114,7 +128,32 @@ namespace JinYanMaoYing
             if (!videoFinished && player != null && !player.isPrepared) FinishVideo();
         }
 
-        private void OnPrepared(VideoPlayer source) { if (!videoFinished) source.Play(); }
+        private void OnPrepared(VideoPlayer source)
+        {
+            if (videoFinished) return;
+            source.Play();
+            if (endingMusicSource != null)
+            {
+                endingMusicSource.volume = EndingMusicVolume;
+                endingMusicSource.Play();
+                StartCoroutine(FadeEndingMusicAtEnd(source));
+            }
+        }
+
+        private IEnumerator FadeEndingMusicAtEnd(VideoPlayer source)
+        {
+            const double fadeDuration = 2.0;
+            while (!videoFinished && source != null && source.clip != null)
+            {
+                if (source.isPlaying)
+                {
+                    double remaining = source.clip.length - source.time;
+                    if (remaining <= fadeDuration)
+                        endingMusicSource.volume = EndingMusicVolume * Mathf.Clamp01((float)(remaining / fadeDuration));
+                }
+                yield return null;
+            }
+        }
         private void OnFinished(VideoPlayer source) { FinishVideo(); }
         private void OnError(VideoPlayer source, string message)
         {
@@ -127,6 +166,7 @@ namespace JinYanMaoYing
             if (videoFinished) return;
             videoFinished = true;
             if (player != null) player.Stop();
+            if (endingMusicSource != null) endingMusicSource.Stop();
             if (videoOverlay != null) videoOverlay.SetActive(false);
             StartCoroutine(PlayReveal());
         }
