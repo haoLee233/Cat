@@ -1038,19 +1038,45 @@ public static class RebuildScenes
             new Color(0.28f, 0.12f, 0.09f));
         messagePanel.gameObject.SetActive(false);
 
-        Image dialog = Picture(canvas.transform, "营造匠人对话框",
-            "Assets/Art/WuMen/WM_Dialog_Box.png",
-            new Vector2(1390f, 540f), new Vector2(0f, -242f));
+        Image dialog = ColorPanel(canvas.transform, "剧情对话层",
+            new Vector2(1840f, 345f), new Vector2(0f, -337f),
+            new Color(0.105f, 0.085f, 0.075f, 0.94f));
         dialog.raycastTarget = true;
+        Button dialogClick = dialog.gameObject.AddComponent<Button>();
+        dialogClick.transition = Selectable.Transition.None;
+        dialogClick.targetGraphic = dialog;
+        UnityEventTools.AddPersistentListener(dialogClick.onClick, game.AdvanceDialogue);
         game.dialoguePanel = dialog.gameObject;
-        game.speakerText = Label(dialog.transform, "说话者", "", 44,
-            new Vector2(1120f, 70f), new Vector2(0f, 150f),
-            new Color(0.33f, 0.13f, 0.10f));
-        game.dialogueText = Label(dialog.transform, "对话正文", "", 37,
-            new Vector2(1100f, 184f), new Vector2(0f, 18f),
-            new Color(0.19f, 0.13f, 0.10f));
+        ColorPanel(dialog.transform, "上缘金线", new Vector2(1810f, 3f),
+            new Vector2(0f, 168f), new Color(0.82f, 0.67f, 0.41f));
+        ColorPanel(dialog.transform, "下缘金线", new Vector2(1810f, 2f),
+            new Vector2(0f, -168f), new Color(0.65f, 0.51f, 0.33f));
+        ColorPanel(dialog.transform, "立绘分隔线", new Vector2(2f, 275f),
+            new Vector2(-465f, 0f), new Color(0.74f, 0.57f, 0.37f, 0.72f));
+        game.dialoguePortrait = Picture(dialog.transform, "匠人近景立绘",
+            art + "营造匠人立绘.png", new Vector2(365f, 445f),
+            new Vector2(-690f, 50f));
+        ColorPanel(dialog.transform, "姓名牌", new Vector2(455f, 66f),
+            new Vector2(-210f, 119f), new Color(0.36f, 0.15f, 0.12f, 0.96f));
+        game.speakerText = Label(dialog.transform, "说话者", "", 45,
+            new Vector2(425f, 60f), new Vector2(-210f, 119f),
+            new Color(1f, 0.91f, 0.72f));
+        game.speakerText.alignment = TextAnchor.MiddleCenter;
+        Text role = Label(dialog.transform, "人物身份", "保和殿营造图守护者", 30,
+            new Vector2(640f, 57f), new Vector2(455f, 119f),
+            new Color(0.84f, 0.73f, 0.56f));
+        role.alignment = TextAnchor.MiddleLeft;
+        game.speakerRoleText = role;
+        game.dialogueText = Label(dialog.transform, "对话正文", "", 43,
+            new Vector2(1210f, 166f), new Vector2(135f, 6f),
+            new Color(1f, 0.96f, 0.87f));
+        game.dialogueText.alignment = TextAnchor.UpperLeft;
+        game.continueHint = Label(dialog.transform, "继续提示", "", 27,
+            new Vector2(650f, 48f), new Vector2(310f, -132f),
+            new Color(0.82f, 0.75f, 0.62f));
+        game.continueHint.alignment = TextAnchor.MiddleRight;
         Button next = ActionButton(dialog.transform, "继续对话", "继续",
-            new Vector2(220f, 69f), new Vector2(0f, -159f));
+            new Vector2(190f, 64f), new Vector2(755f, -126f));
         UnityEventTools.AddPersistentListener(next.onClick, game.AdvanceDialogue);
         dialog.gameObject.SetActive(false);
 

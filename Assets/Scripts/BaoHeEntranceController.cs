@@ -17,18 +17,22 @@ namespace JinYanMaoYing
         public CanvasGroup colorBackground;
         public GameObject dialoguePanel;
         public Text speakerText;
+        public Text speakerRoleText;
         public Text dialogueText;
+        public Text continueHint;
+        public Image dialoguePortrait;
         public Text approachHint;
         public Text sceneMessage;
         public GameObject sceneMessagePanel;
         public LevelIntroVideo completionVideo;
 
-        private readonly string[] speakers = { "营造匠人", "墨宝", "营造匠人" };
+        private readonly string[] speakers = { "营造匠人 · 阿榆", "墨宝", "营造匠人 · 阿榆", "墨宝" };
         private readonly string[] lines =
         {
-            "墨宝，保和殿的阶陛与屋檐失了颜色，匠人留下的营造图也散乱了。",
-            "把营造图拼好，殿宇的色彩就能回来吗？",
-            "正是。看清屋檐、殿门和阶陛的位置，再将每块图案转回原来的方向。"
+            "我是阿榆，守着这卷保和殿营造图。你看，屋檐和阶陛都失了颜色。",
+            "喵？散开的图案，就是原来的营造图吗？",
+            "正是。请看清殿门、屋檐和石阶，把每块图案转回原位。",
+            "喵！交给我吧。"
         };
 
         private int lineIndex;
@@ -38,6 +42,8 @@ namespace JinYanMaoYing
         private float animationClock;
         private float idleClock;
         private Material revealMaterial;
+        private Coroutine typewriter;
+        private bool typing;
 
         private void Start()
         {
@@ -124,6 +130,15 @@ namespace JinYanMaoYing
         public void AdvanceDialogue()
         {
             if (!conversing) return;
+            if (typing)
+            {
+                if (typewriter != null) StopCoroutine(typewriter);
+                typewriter = null;
+                typing = false;
+                if (dialogueText != null) dialogueText.text = lines[lineIndex];
+                if (continueHint != null) continueHint.text = "点击继续  /  E  /  Enter";
+                return;
+            }
             lineIndex++;
             if (lineIndex < lines.Length)
             {
@@ -139,7 +154,29 @@ namespace JinYanMaoYing
         private void ShowLine()
         {
             if (speakerText != null) speakerText.text = speakers[lineIndex];
-            if (dialogueText != null) dialogueText.text = lines[lineIndex];
+            bool catSpeaking = speakers[lineIndex] == "墨宝";
+            if (speakerRoleText != null)
+                speakerRoleText.text = catSpeaking ? "失色画卷的巡游者" : "保和殿营造图守护者";
+            if (dialoguePortrait != null)
+                dialoguePortrait.color = catSpeaking
+                    ? new Color(0.58f, 0.58f, 0.58f, 0.82f) : Color.white;
+            if (typewriter != null) StopCoroutine(typewriter);
+            typewriter = StartCoroutine(TypeLine(lines[lineIndex]));
+        }
+
+        private IEnumerator TypeLine(string line)
+        {
+            typing = true;
+            if (dialogueText != null) dialogueText.text = "";
+            if (continueHint != null) continueHint.text = "点击显示全文  /  E  /  Enter";
+            for (int count = 1; count <= line.Length; count++)
+            {
+                if (dialogueText != null) dialogueText.text = line.Substring(0, count);
+                yield return new WaitForSecondsRealtime(0.045f);
+            }
+            typing = false;
+            typewriter = null;
+            if (continueHint != null) continueHint.text = "点击继续  /  E  /  Enter";
         }
 
         private IEnumerator RestoreColorAndOpenKnowledge()
