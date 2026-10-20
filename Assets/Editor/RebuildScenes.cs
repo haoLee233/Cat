@@ -549,9 +549,9 @@ public static class RebuildScenes
         ColorPanel(canvas.transform, "点击提示底色", new Vector2(1260f, 130f), new Vector2(0f, -420f), new Color(1f, 1f, 1f, 0.33f));
         GameNavigator nav = new GameObject("场景导航", typeof(GameNavigator)).GetComponent<GameNavigator>();
         LevelIntroVideo openingIntro = nav.gameObject.AddComponent<LevelIntroVideo>();
-        openingIntro.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_one_video.m4v");
+        openingIntro.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/游戏开场cg.m4v");
         openingIntro.playOnStart = false;
-        if (openingIntro.clip == null) throw new Exception("缺少午门片头 Scene_one_video.m4v");
+        if (openingIntro.clip == null) throw new Exception("缺少游戏开场片头 游戏开场cg.m4v");
         nav.openingIntro = openingIntro;
         UnityEventTools.AddPersistentListener(openingIntro.onFinished, nav.OpeningIntroFinished);
         Button start = ActionButton(canvas.transform, "开始游戏", "继续当前进度", new Vector2(550f, 92f), new Vector2(-295f, -420f));
@@ -740,8 +740,8 @@ public static class RebuildScenes
         runner.videoScreen = raw;
         VideoPlayer player = new GameObject("午门CG播放器", typeof(VideoPlayer)).GetComponent<VideoPlayer>();
         runner.introPlayer = player;
-        runner.introClip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_one_video.m4v");
-        if (runner.introClip == null) throw new Exception("缺少午门片头 Scene_one_video.m4v");
+        runner.introClip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/午门cg.m4v");
+        if (runner.introClip == null) throw new Exception("缺少午门片头 午门cg.m4v");
         return Save(scene, GameNavigator.WuMen);
     }
 
@@ -962,8 +962,8 @@ public static class RebuildScenes
         game.videoScreen = raw;
         VideoPlayer player = new GameObject("乾清宫CG播放器", typeof(VideoPlayer)).GetComponent<VideoPlayer>();
         game.introPlayer = player;
-        game.introClip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_two_video.m4v");
-        if (game.introClip == null) throw new Exception("缺少乾清宫第二段片头 Scene_two_video.m4v");
+        game.introClip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/乾清宫cg.m4v");
+        if (game.introClip == null) throw new Exception("缺少乾清宫片头 乾清宫cg.m4v");
         return Save(scene, GameNavigator.QianQingGong);
     }
 
