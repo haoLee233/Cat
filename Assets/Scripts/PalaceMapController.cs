@@ -167,7 +167,7 @@ namespace JinYanMaoYing
                     SceneTransition.Load(GameNavigator.WuMen);
                     break;
                 case 1: SceneTransition.Load(GameNavigator.QianQingGong); break;
-                case 2: SceneTransition.Load(GameNavigator.BaoHeDian); break;
+                case 2: SceneTransition.Load(GameNavigator.BaoHeEntrance); break;
                 case 3: SceneTransition.Load(GameNavigator.TaiHeDian); break;
             }
         }

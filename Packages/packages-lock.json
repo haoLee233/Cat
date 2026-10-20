@@ -3,7 +3,7 @@
     "com.unity.2d.animation": {
       "version": "9.2.0",
       "depth": 1,
-      "source": "registry",
+      "source": "builtin",
       "dependencies": {
         "com.unity.2d.common": "8.1.0",
         "com.unity.2d.sprite": "1.0.0",
@@ -28,7 +28,7 @@
     "com.unity.2d.common": {
       "version": "8.1.0",
       "depth": 2,
-      "source": "builtin",
+      "source": "registry",
       "dependencies": {
         "com.unity.2d.sprite": "1.0.0",
         "com.unity.mathematics": "1.1.0",

@@ -110,7 +110,8 @@ public static class WindowsBuild
             "Assets/Scenes/保和殿营造录.unity",
             "Assets/Scenes/太和殿.unity",
             "Assets/Scenes/匠心图鉴.unity",
-            "Assets/Scenes/终章.unity"
+            "Assets/Scenes/终章.unity",
+            "Assets/Scenes/保和殿前庭.unity"
         };
         foreach (string path in scenes)
         {

@@ -26,6 +26,7 @@ public static class RebuildScenes
         string map = BuildMap();
         string wuMen = BuildWuMen();
         string qianQing = BuildQianQingGong();
+        string baoHeEntrance = BuildBaoHeEntrance();
         string baoHeDian = BuildBaoHeDian();
         string knowledge = BuildWuMenKnowledge();
         string qianQingKnowledge = BuildQianQingKnowledge();
@@ -39,6 +40,7 @@ public static class RebuildScenes
             new EditorBuildSettingsScene(map, true),
             new EditorBuildSettingsScene(wuMen, true),
             new EditorBuildSettingsScene(qianQing, true),
+            new EditorBuildSettingsScene(baoHeEntrance, true),
             new EditorBuildSettingsScene(baoHeDian, true),
             new EditorBuildSettingsScene(baoHeKnowledge, true),
             new EditorBuildSettingsScene(knowledge, true),
@@ -51,7 +53,45 @@ public static class RebuildScenes
         PlayerSettings.companyName = "锦檐猫影";
         AssetDatabase.SaveAssets();
         EditorSceneManager.OpenScene(cover);
-        Debug.Log("REMAKE_SCENES_READY " + cover + ", " + map + ", " + wuMen + ", " + qianQing + ", " + baoHeDian + ", " + baoHeKnowledge + ", " + knowledge + ", " + qianQingKnowledge + ", " + taiHe + ", " + collection + ", " + ending);
+        Debug.Log("REMAKE_SCENES_READY " + cover + ", " + map + ", " + wuMen + ", " + qianQing + ", " + baoHeEntrance + ", " + baoHeDian + ", " + baoHeKnowledge + ", " + knowledge + ", " + qianQingKnowledge + ", " + taiHe + ", " + collection + ", " + ending);
+    }
+
+    [MenuItem("锦檐猫影/更新保和殿入口场景")]
+    public static void ApplyBaoHeEntrance()
+    {
+        font = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/STXINGKA.TTF");
+        if (font == null) throw new Exception("缺少 STXINGKA 字体");
+        foreach (string path in new[] {
+            "Assets/Art/BaoHeDian/Entrance/保和殿前庭彩色.png",
+            "Assets/Art/BaoHeDian/Entrance/营造匠人立绘.png"
+        })
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null) throw new Exception("缺少保和殿入口图片: " + path);
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.alphaIsTransparency = true;
+            importer.maxTextureSize = 4096;
+            importer.SaveAndReimport();
+        }
+        string entrance = BuildBaoHeEntrance();
+        Scene puzzle = EditorSceneManager.OpenScene("Assets/Scenes/保和殿水管.unity", OpenSceneMode.Single);
+        BaoHeDianPipes game = UnityEngine.Object.FindObjectOfType<BaoHeDianPipes>();
+        if (game == null) throw new Exception("保和殿拼图控制器缺失");
+        LevelIntroVideo oldIntro = game.GetComponent<LevelIntroVideo>();
+        game.introVideo = null;
+        if (oldIntro != null) UnityEngine.Object.DestroyImmediate(oldIntro);
+        EditorSceneManager.SaveScene(puzzle);
+        var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+        if (!scenes.Exists(item => item.path == entrance))
+        {
+            int puzzleIndex = scenes.FindIndex(item => item.path.EndsWith("/保和殿水管.unity"));
+            scenes.Insert(puzzleIndex < 0 ? scenes.Count : puzzleIndex, new EditorBuildSettingsScene(entrance, true));
+        }
+        EditorBuildSettings.scenes = scenes.ToArray();
+        AssetDatabase.SaveAssets();
+        EditorSceneManager.OpenScene(entrance, OpenSceneMode.Single);
+        Debug.Log("BAOHE_ENTRANCE_READY " + entrance);
     }
 
     [MenuItem("锦檐猫影/应用本轮场景修复")]
@@ -926,6 +966,137 @@ public static class RebuildScenes
         return Save(scene, GameNavigator.QianQingGong);
     }
 
+    private static string BuildBaoHeEntrance()
+    {
+        Scene scene = NewScene(GameNavigator.BaoHeEntrance);
+        Canvas canvas = MakeCanvas();
+        const string art = "Assets/Art/BaoHeDian/Entrance/";
+        const string sceneArt = art + "保和殿前庭彩色.png";
+        Image greyscale = Picture(canvas.transform, "保和殿失色底图", sceneArt,
+            new Vector2(1920f, 1080f), Vector2.zero);
+        greyscale.preserveAspect = false;
+        Shader shader = Shader.Find("JinYan/UI Greyscale");
+        if (shader == null) throw new Exception("缺少保和殿灰阶界面 Shader");
+        const string materialPath = art + "保和殿失色材质.mat";
+        Material greyscaleMaterial = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+        if (greyscaleMaterial == null)
+        {
+            greyscaleMaterial = new Material(shader);
+            AssetDatabase.CreateAsset(greyscaleMaterial, materialPath);
+        }
+        greyscale.material = greyscaleMaterial;
+        Image color = Picture(canvas.transform, "保和殿复色底图", sceneArt,
+            new Vector2(1920f, 1080f), Vector2.zero);
+        color.preserveAspect = false;
+        Shader revealShader = Shader.Find("JinYan/UI Brush Reveal");
+        if (revealShader == null) throw new Exception("缺少保和殿笔刷复色 Shader");
+        const string revealMaterialPath = art + "保和殿笔刷复色材质.mat";
+        Material revealAsset = AssetDatabase.LoadAssetAtPath<Material>(revealMaterialPath);
+        if (revealAsset == null)
+        {
+            revealAsset = new Material(revealShader);
+            AssetDatabase.CreateAsset(revealAsset, revealMaterialPath);
+        }
+        color.material = revealAsset;
+        CanvasGroup colorGroup = color.gameObject.AddComponent<CanvasGroup>();
+        colorGroup.alpha = 0f;
+
+        BaoHeEntranceController game = new GameObject("保和殿前庭控制",
+            typeof(BaoHeEntranceController)).GetComponent<BaoHeEntranceController>();
+        game.colorBackground = colorGroup;
+
+        Image npc = Picture(canvas.transform, "彩色营造匠人", art + "营造匠人立绘.png",
+            new Vector2(390f, 585f), new Vector2(575f, -112f));
+        npc.raycastTarget = true;
+        Button npcButton = npc.gameObject.AddComponent<Button>();
+        npcButton.transition = Selectable.Transition.None;
+        npcButton.targetGraphic = npc;
+        UnityEventTools.AddPersistentListener(npcButton.onClick, game.BeginDialogue);
+
+        Image cat = Picture(canvas.transform, "墨宝", "Assets/Art/WuMen/跑动1.png",
+            new Vector2(190f, 112f), new Vector2(-720f, -315f));
+        game.cat = cat.rectTransform;
+        game.catImage = cat;
+        game.idleFrame = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/趴下.png");
+        game.runFrames = new[] {
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动1.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动2.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动3.png")
+        };
+
+        ColorPanel(canvas.transform, "标题底色", new Vector2(730f, 96f),
+            new Vector2(0f, 464f), new Color(0.15f, 0.12f, 0.10f, 0.77f));
+        Label(canvas.transform, "场景名", "保和殿 · 前庭", 54,
+            new Vector2(650f, 86f), new Vector2(0f, 464f), new Color(1f, 0.95f, 0.82f));
+        Button map = ActionButton(canvas.transform, "返回地图", "返回地图",
+            new Vector2(255f, 76f), new Vector2(792f, 465f));
+        UnityEventTools.AddPersistentListener(map.onClick, game.ReturnToMap);
+        ColorPanel(canvas.transform, "操作提示底色", new Vector2(1050f, 74f),
+            new Vector2(0f, -455f), new Color(0.96f, 0.90f, 0.75f, 0.92f));
+        game.approachHint = Label(canvas.transform, "靠近匠人提示",
+            "按 A / D 或 ← / → 移动，走近匠人", 33,
+            new Vector2(1010f, 64f), new Vector2(0f, -455f),
+            new Color(0.23f, 0.15f, 0.11f));
+        Image messagePanel = ColorPanel(canvas.transform, "复色提示底色", new Vector2(1020f, 86f),
+            new Vector2(0f, 325f), new Color(0.98f, 0.91f, 0.75f, 0.78f));
+        game.sceneMessagePanel = messagePanel.gameObject;
+        game.sceneMessage = Label(messagePanel.transform, "复色提示", "", 43,
+            new Vector2(980f, 78f), Vector2.zero,
+            new Color(0.28f, 0.12f, 0.09f));
+        messagePanel.gameObject.SetActive(false);
+
+        Image dialog = ColorPanel(canvas.transform, "剧情对话层",
+            new Vector2(1840f, 345f), new Vector2(0f, -337f),
+            new Color(0.105f, 0.085f, 0.075f, 0.94f));
+        dialog.raycastTarget = true;
+        Button dialogClick = dialog.gameObject.AddComponent<Button>();
+        dialogClick.transition = Selectable.Transition.None;
+        dialogClick.targetGraphic = dialog;
+        UnityEventTools.AddPersistentListener(dialogClick.onClick, game.AdvanceDialogue);
+        game.dialoguePanel = dialog.gameObject;
+        ColorPanel(dialog.transform, "上缘金线", new Vector2(1810f, 3f),
+            new Vector2(0f, 168f), new Color(0.82f, 0.67f, 0.41f));
+        ColorPanel(dialog.transform, "下缘金线", new Vector2(1810f, 2f),
+            new Vector2(0f, -168f), new Color(0.65f, 0.51f, 0.33f));
+        ColorPanel(dialog.transform, "立绘分隔线", new Vector2(2f, 275f),
+            new Vector2(-465f, 0f), new Color(0.74f, 0.57f, 0.37f, 0.72f));
+        game.dialoguePortrait = Picture(dialog.transform, "匠人近景立绘",
+            art + "营造匠人立绘.png", new Vector2(365f, 445f),
+            new Vector2(-690f, 50f));
+        ColorPanel(dialog.transform, "姓名牌", new Vector2(455f, 66f),
+            new Vector2(-210f, 119f), new Color(0.36f, 0.15f, 0.12f, 0.96f));
+        game.speakerText = Label(dialog.transform, "说话者", "", 45,
+            new Vector2(425f, 60f), new Vector2(-210f, 119f),
+            new Color(1f, 0.91f, 0.72f));
+        game.speakerText.alignment = TextAnchor.MiddleCenter;
+        Text role = Label(dialog.transform, "人物身份", "保和殿营造图守护者", 30,
+            new Vector2(640f, 57f), new Vector2(455f, 119f),
+            new Color(0.84f, 0.73f, 0.56f));
+        role.alignment = TextAnchor.MiddleLeft;
+        game.speakerRoleText = role;
+        game.dialogueText = Label(dialog.transform, "对话正文", "", 43,
+            new Vector2(1210f, 166f), new Vector2(135f, 6f),
+            new Color(1f, 0.96f, 0.87f));
+        game.dialogueText.alignment = TextAnchor.UpperLeft;
+        game.continueHint = Label(dialog.transform, "继续提示", "", 27,
+            new Vector2(650f, 48f), new Vector2(310f, -132f),
+            new Color(0.82f, 0.75f, 0.62f));
+        game.continueHint.alignment = TextAnchor.MiddleRight;
+        Button next = ActionButton(dialog.transform, "继续对话", "继续",
+            new Vector2(190f, 64f), new Vector2(755f, -126f));
+        UnityEventTools.AddPersistentListener(next.onClick, game.AdvanceDialogue);
+        dialog.gameObject.SetActive(false);
+
+        LevelIntroVideo cg = game.gameObject.AddComponent<LevelIntroVideo>();
+        cg.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/第三.m4v");
+        if (cg.clip == null) throw new Exception("缺少保和殿片头 CG 第三.m4v");
+        cg.buttonFont = font;
+        cg.playOnStart = false;
+        cg.skipLabel = "跳过片头";
+        game.completionVideo = cg;
+        return Save(scene, GameNavigator.BaoHeEntrance);
+    }
+
     private static string BuildBaoHeDian()
     {
         Scene scene = NewScene(GameNavigator.BaoHeDian);
@@ -935,10 +1106,6 @@ public static class RebuildScenes
         ColorPanel(canvas.transform, "拼合区宣纸底色", new Vector2(690f, 690f), new Vector2(-360f, -12f),
             new Color(0.96f, 0.92f, 0.83f, 0.94f));
         BaoHeDianPipes game = new GameObject("保和殿关卡控制", typeof(BaoHeDianPipes)).GetComponent<BaoHeDianPipes>();
-        game.introVideo = game.gameObject.AddComponent<LevelIntroVideo>();
-        game.introVideo.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/第三.m4v");
-        game.introVideo.buttonFont = font;
-        if (game.introVideo.clip == null) throw new Exception("缺少保和殿第三段CG");
         game.timeLimit = 420f;
         game.tiles = new Button[25];
         Texture2D puzzleArt = AssetDatabase.LoadAssetAtPath<Texture2D>(artPath);

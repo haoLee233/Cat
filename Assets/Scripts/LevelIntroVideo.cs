@@ -13,6 +13,7 @@ namespace JinYanMaoYing
         [Range(0f, 1f)] public float cutsceneAmbienceVolume = 0.45f;
         public Font buttonFont;
         public bool playOnStart = true;
+        public string skipLabel = "跳过片头";
         public UnityEvent onFinished = new UnityEvent();
         public bool IsPlaying { get; private set; }
 
@@ -130,7 +131,7 @@ namespace JinYanMaoYing
             text.fontSize = 39;
             text.alignment = TextAnchor.MiddleCenter;
             text.color = new Color(1f, 0.95f, 0.83f);
-            text.text = "跳过片头";
+            text.text = string.IsNullOrEmpty(skipLabel) ? "跳过片头" : skipLabel;
             text.raycastTarget = false;
         }
 
