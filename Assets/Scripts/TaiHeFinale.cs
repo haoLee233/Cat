@@ -7,6 +7,8 @@ namespace JinYanMaoYing
 {
     public sealed class TaiHeFinale : MonoBehaviour
     {
+        private const float RunFrameDuration = 0.12f;
+        private const float AirborneTiltDegrees = 12f;
         // Serialized fields and callbacks remain for the existing scene and ending.
         public Button[] parts;
         public Text instruction, feedback, progress;
@@ -32,8 +34,13 @@ namespace JinYanMaoYing
         private CanvasGroup fade;
         private GameObject assembly;
         private int room, carrying = -1, jumps, turns, facing = 1;
-        private float x = -820f, feet = -365f, velocity, animation, hintEnd;
+        private float x = -820f, feet = -365f, velocity, runFrameAccumulator, hintEnd;
+        private int runFrameIndex;
         private bool transitioning, inAssembly, finished;
+        private AudioSource runAudioSource;
+        private AudioSource effectAudioSource;
+        private AudioClip jumpClip, landingClip, interactionClip;
+        private Quaternion catRestRotation;
         private const float Gravity = 1450f;
         private const float HalfCat = 40f;
 
@@ -129,6 +136,26 @@ namespace JinYanMaoYing
             catArt=Raw(root,"墨宝",Vector2.zero,new Vector2(164,88),runs[0]);
             catArt.raycastTarget=false;
             cat=catArt.rectTransform;
+            catRestRotation=cat.localRotation;
+            AudioClip runClip=Resources.Load<AudioClip>("Audio/Cat_Run");
+            if(runClip!=null) {
+                runAudioSource=gameObject.AddComponent<AudioSource>();
+                runAudioSource.clip=runClip;
+                runAudioSource.loop=true;
+                runAudioSource.playOnAwake=false;
+                runAudioSource.spatialBlend=0f;
+                runAudioSource.pitch=1f;
+                runAudioSource.volume=.65f;
+            }
+            jumpClip=Resources.Load<AudioClip>("Audio/Jump_Takeoff");
+            landingClip=Resources.Load<AudioClip>("Audio/Jump_Land");
+            interactionClip=Resources.Load<AudioClip>("Audio/UI_Click");
+            if(jumpClip!=null || landingClip!=null || interactionClip!=null) {
+                effectAudioSource=gameObject.AddComponent<AudioSource>();
+                effectAudioSource.playOnAwake=false;
+                effectAudioSource.spatialBlend=0f;
+                effectAudioSource.volume=.82f;
+            }
             carriedArt=Raw(cat,"背上构件",new Vector2(0,93),new Vector2(76,70),items);
             carriedArt.gameObject.SetActive(false);
             Panel(root,"操作宣纸",new Vector2(1660,120),new Vector2(0,-465),
@@ -172,20 +199,33 @@ namespace JinYanMaoYing
         private void Update()
         {
             if(Input.GetKeyDown(KeyCode.Escape)) { OpenMap(); return; }
-            if(finished || transitioning || introVideo!=null && introVideo.IsPlaying) return;
+            if(finished || transitioning || introVideo!=null && introVideo.IsPlaying) {
+                SetRunAudio(false); return;
+            }
             if(inAssembly) {
-                if(Input.GetKeyDown(KeyCode.A)||Input.GetKeyDown(KeyCode.LeftArrow)) Rotate(-1);
-                if(Input.GetKeyDown(KeyCode.D)||Input.GetKeyDown(KeyCode.RightArrow)) Rotate(1);
-                if(Input.GetKeyDown(KeyCode.Space)||Input.GetKeyDown(KeyCode.Return)) Assemble();
+                SetRunAudio(false);
+                if(Input.GetKeyDown(KeyCode.A)||Input.GetKeyDown(KeyCode.LeftArrow)) {
+                    PlayEffectSound(interactionClip,.72f); Rotate(-1);
+                }
+                if(Input.GetKeyDown(KeyCode.D)||Input.GetKeyDown(KeyCode.RightArrow)) {
+                    PlayEffectSound(interactionClip,.72f); Rotate(1);
+                }
+                if(Input.GetKeyDown(KeyCode.Space)||Input.GetKeyDown(KeyCode.Return)) {
+                    PlayEffectSound(interactionClip,.78f); Assemble();
+                }
                 return;
             }
+            float verticalInput=Input.GetAxisRaw("Vertical");
             float dt=Mathf.Min(Time.deltaTime,.04f), oldX=x, oldFeet=feet;
+            bool wasAirborne=jumps>0 || velocity>0f;
             float move=Input.GetAxisRaw("Horizontal");
             if(Mathf.Abs(move)>.1f) facing=move<0?-1:1;
             x=Mathf.Clamp(x+move*390f*dt,-970f,970f);
-            if(!Climb(dt)) {
+            bool climbing=Climb(dt);
+            if(!climbing) {
                 if((Input.GetKeyDown(KeyCode.Space)||Input.GetKeyDown(KeyCode.UpArrow))&&jumps<2) {
                     velocity=jumps==0?685f:630f; jumps++;
+                    PlayEffectSound(jumpClip,.80f);
                 }
                 if(jumps==0 && Mathf.Abs(oldFeet-Ground(room,oldX))<15f && velocity<=0)
                     feet=Ground(room,x);
@@ -193,11 +233,24 @@ namespace JinYanMaoYing
                     velocity-=Gravity*dt; feet+=velocity*dt; Land(oldFeet);
                 }
             }
+            if(wasAirborne && jumps==0 && !climbing) PlayEffectSound(landingClip,.88f);
             cat.anchoredPosition=new Vector2(x,feet+HalfCat);
             cat.localScale=new Vector3(facing,1,1);
-            if(Mathf.Abs(move)>.1f&&runs[0]!=null) {
-                animation+=dt*11f; catArt.texture=runs[(int)animation%3];
+            bool airborne=jumps>0 || velocity>0f;
+            bool movingOnGround=!airborne && Mathf.Abs(move)>.1f && Mathf.Abs(verticalInput)<.1f;
+            if(airborne) cat.localRotation=catRestRotation*Quaternion.Euler(0f,0f,AirborneTiltDegrees);
+            else {
+                cat.localRotation=catRestRotation;
+                if(movingOnGround&&runs[0]!=null) {
+                    runFrameAccumulator+=dt;
+                    while(runFrameAccumulator>=RunFrameDuration) {
+                        runFrameAccumulator-=RunFrameDuration;
+                        runFrameIndex=(runFrameIndex+1)%runs.Length;
+                    }
+                    catArt.texture=runs[runFrameIndex];
+                }
             }
+            SetRunAudio(movingOnGround);
             if(Input.GetKeyDown(KeyCode.E)) Interact();
             if(x>943f||x< -943f) {
                 int next=x>0?room+1:room-1;
@@ -206,6 +259,17 @@ namespace JinYanMaoYing
                 else x=x>0?905f:-905f;
             }
             if(Time.time>hintEnd) hint.text="A/D 移动 · 空格二段跳 · 梯口 ↑/↓ 攀爬 · E 交互";
+        }
+        private void SetRunAudio(bool shouldPlay)
+        {
+            if(runAudioSource==null) return;
+            runAudioSource.pitch=room==1?1.04f:room==2?1.01f:.97f;
+            if(shouldPlay) { if(!runAudioSource.isPlaying) runAudioSource.Play(); }
+            else if(runAudioSource.isPlaying) runAudioSource.Stop();
+        }
+        private void PlayEffectSound(AudioClip clip,float volume)
+        {
+            if(effectAudioSource!=null && clip!=null) effectAudioSource.PlayOneShot(clip,volume);
         }
         private bool Climb(float dt)
         {
@@ -251,12 +315,15 @@ namespace JinYanMaoYing
         {
             Vector2 paws=new Vector2(x,feet+56f);
             if(!taken[room]&&carrying<0&&Vector2.Distance(paws,pickups[room])<155f) {
+                PlayEffectSound(interactionClip,.78f);
                 taken[room]=true; carrying=room;
                 collectible.gameObject.SetActive(false);
                 carriedArt.gameObject.SetActive(true);
                 carriedArt.uvRect=UV(room);
                 Hud(); Tell("带色构件已背起。穿过台阶或修缮架，送到对应轮廓。",5f);
-            } else if(carrying==room&&Vector2.Distance(paws,sockets[room])<165f) OpenAssembly();
+            } else if(carrying==room&&Vector2.Distance(paws,sockets[room])<165f) {
+                PlayEffectSound(interactionClip,.78f); OpenAssembly();
+            }
             else Tell(carrying==room?"缺口还在前方，继续沿可走路线前进。":
                 solved[room]?"本景已复色，从画面边缘前往相邻场景。":
                 "循着彩色构件靠近，按 E 拾起。",3f);

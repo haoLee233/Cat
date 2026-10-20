@@ -833,9 +833,16 @@ public static class RebuildScenes
         game.idleSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/趴下.png");
         game.runFrames = new[] {
             AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动1.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧1.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧4.png"),
             AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动2.png"),
-            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动3.png")
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧2.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧5.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动3.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧3.png"),
+            AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧6.png")
         };
+        game.airborneSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/WuMen/跑动中间帧2.png");
         Image miniMap = Picture(canvas.transform, "左上角水墨小地图", "Assets/Art/WuMen/WM_Dialog_Box.png",
             new Vector2(690f, 330f), new Vector2(-600f, 362f));
         miniMap.color = new Color(1f, 1f, 1f, 0.91f);

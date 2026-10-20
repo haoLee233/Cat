@@ -8,10 +8,13 @@ namespace JinYanMaoYing
 {
     public sealed class QianQingExplorer : MonoBehaviour
     {
+        private const float RunFrameDuration = 0.12f;
+        private const float AirborneTiltDegrees = 12f;
         public QianQingRoom[] rooms;
         public RectTransform cat;
         public Image catImage;
         public Sprite[] runFrames;
+        public Sprite airborneSprite;
         public Sprite idleSprite;
         public Text roomTitle;
         public Text status;
@@ -56,14 +59,19 @@ namespace JinYanMaoYing
         private int jumps;
         private float verticalSpeed;
         private float hintUntil;
-        private float animationTime;
+        private float runFrameAccumulator;
         private float idleTime;
         private float lastDirectionTapTime = -10f;
         private int lastTapDirection;
+        private int runFrameIndex;
         private int facing = 1;
         private bool sprinting;
         private bool changing;
         private bool introPlaying = true;
+        private AudioSource runAudioSource;
+        private AudioSource effectAudioSource;
+        private AudioClip jumpClip, landingClip, interactionClip;
+        private Quaternion catRestRotation;
         private RenderTexture videoTexture;
         private RawImage relicPreview;
         private RectTransform relicPreviewFrame;
@@ -101,7 +109,32 @@ namespace JinYanMaoYing
                         room.relic.gameObject.AddComponent<CollectibleGlow>();
             if (fade != null) { fade.alpha = 0f; fade.blocksRaycasts = false; }
             cat.anchoredPosition = new Vector2(-760f, Floor + HalfCat);
-            if (catImage != null) catImage.preserveAspect = true;
+            if (catImage != null)
+            {
+                catImage.preserveAspect = true;
+                catRestRotation = cat.localRotation;
+            }
+            AudioClip runClip = Resources.Load<AudioClip>("Audio/Cat_Run");
+            if (runClip != null)
+            {
+                runAudioSource = gameObject.AddComponent<AudioSource>();
+                runAudioSource.clip = runClip;
+                runAudioSource.loop = true;
+                runAudioSource.playOnAwake = false;
+                runAudioSource.spatialBlend = 0f;
+                runAudioSource.pitch = 1f;
+                runAudioSource.volume = 0.65f;
+            }
+            jumpClip = Resources.Load<AudioClip>("Audio/Jump_Takeoff");
+            landingClip = Resources.Load<AudioClip>("Audio/Jump_Land");
+            interactionClip = Resources.Load<AudioClip>("Audio/UI_Click");
+            if (jumpClip != null || landingClip != null || interactionClip != null)
+            {
+                effectAudioSource = gameObject.AddComponent<AudioSource>();
+                effectAudioSource.playOnAwake = false;
+                effectAudioSource.spatialBlend = 0f;
+                effectAudioSource.volume = 0.82f;
+            }
             ShowRoom(0);
             SetHint("按键盘 A、D 键左右移动；按空格键跳跃。\n走近发光的器物后，按键盘 E 键查看。", 8f);
             if (introClip == null || introPlayer == null || videoScreen == null || videoOverlay == null)
@@ -174,9 +207,14 @@ namespace JinYanMaoYing
 
         private void Update()
         {
-            if (introPlaying || changing || quizIndex >= 0 || (ending != null && ending.activeSelf)) return;
+            if (introPlaying || changing || quizIndex >= 0 || (ending != null && ending.activeSelf))
+            {
+                SetRunAudio(false);
+                return;
+            }
             float dt = Time.deltaTime;
             Vector2 old = cat.anchoredPosition;
+            bool wasAirborne = jumps > 0 || verticalSpeed > 0f;
             float input = Input.GetAxisRaw("Horizontal");
             int tap = Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow) ? 1 :
                 Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow) ? -1 : 0;
@@ -189,27 +227,11 @@ namespace JinYanMaoYing
             if (Mathf.Abs(input) < 0.1f) sprinting = false;
             if (Mathf.Abs(input) > 0.1f) facing = input < 0f ? -1 : 1;
             float x = old.x + input * (sprinting ? 650f : 390f) * dt;
-            if (catImage != null && runFrames != null && runFrames.Length > 0 && Mathf.Abs(input) > 0.1f)
-            {
-                idleTime = 0f;
-                animationTime += dt * (sprinting ? 16f : 12f);
-                catImage.sprite = runFrames[(int)animationTime % runFrames.Length];
-                catImage.rectTransform.localScale = new Vector3(facing, 1f, 1f);
-            }
-            else if (catImage != null && Mathf.Abs(input) < 0.1f && jumps == 0)
-            {
-                idleTime += dt;
-                if (idleTime > 3.5f && idleSprite != null)
-                {
-                    catImage.sprite = idleSprite;
-                    float breath = 1f + Mathf.Sin(Time.unscaledTime * 2.3f) * 0.018f;
-                    catImage.rectTransform.localScale = new Vector3(facing * breath, breath, 1f);
-                }
-            }
             if ((Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow)) && jumps < 2)
             {
                 verticalSpeed = jumps == 0 ? 720f : 660f;
                 jumps++;
+                PlayEffectSound(jumpClip, 0.80f);
             }
             verticalSpeed -= Gravity * dt;
             float y = old.y + verticalSpeed * dt;
@@ -226,7 +248,46 @@ namespace JinYanMaoYing
                 verticalSpeed = 0f;
                 jumps = 0;
             }
+            if (wasAirborne && jumps == 0) PlayEffectSound(landingClip, 0.88f);
             cat.anchoredPosition = new Vector2(Mathf.Clamp(x, -980f, 980f), y);
+            bool airborne = verticalSpeed > 0f || jumps > 0;
+            bool movingOnGround = !airborne && Mathf.Abs(input) > 0.1f &&
+                Mathf.Abs(Input.GetAxisRaw("Vertical")) < 0.1f;
+            if (catImage != null)
+            {
+                catImage.rectTransform.localScale = new Vector3(facing, 1f, 1f);
+                if (airborne)
+                {
+                    cat.localRotation = catRestRotation * Quaternion.Euler(0f, 0f, AirborneTiltDegrees);
+                    if (airborneSprite != null) catImage.sprite = airborneSprite;
+                }
+                else
+                {
+                    cat.localRotation = catRestRotation;
+                    if (movingOnGround && runFrames != null && runFrames.Length > 0)
+                    {
+                        idleTime = 0f;
+                        runFrameAccumulator += dt;
+                        while (runFrameAccumulator >= RunFrameDuration)
+                        {
+                            runFrameAccumulator -= RunFrameDuration;
+                            runFrameIndex = (runFrameIndex + 1) % runFrames.Length;
+                        }
+                        catImage.sprite = runFrames[runFrameIndex];
+                    }
+                    else if (Mathf.Abs(input) < 0.1f)
+                    {
+                        idleTime += dt;
+                        if (idleTime > 3.5f && idleSprite != null)
+                        {
+                            catImage.sprite = idleSprite;
+                            float breath = 1f + Mathf.Sin(Time.unscaledTime * 2.3f) * 0.018f;
+                            catImage.rectTransform.localScale = new Vector3(facing * breath, breath, 1f);
+                        }
+                    }
+                }
+            }
+            SetRunAudio(movingOnGround);
 
             if (Input.GetKeyDown(KeyCode.E)) TryInspect();
             if (x > 943f)
@@ -244,6 +305,23 @@ namespace JinYanMaoYing
                 hint.text = RoomHint(currentRoom);
         }
 
+        private void SetRunAudio(bool shouldPlay)
+        {
+            if (runAudioSource == null) return;
+            runAudioSource.pitch = currentRoom == 1 ? 1.025f : currentRoom == 3 ? 1.04f :
+                currentRoom == 2 ? 0.98f : 0.96f;
+            if (shouldPlay)
+            {
+                if (!runAudioSource.isPlaying) runAudioSource.Play();
+            }
+            else if (runAudioSource.isPlaying) runAudioSource.Stop();
+        }
+
+        private void PlayEffectSound(AudioClip clip, float volume)
+        {
+            if (effectAudioSource != null && clip != null) effectAudioSource.PlayOneShot(clip, volume);
+        }
+
         private void TryInspect()
         {
             QianQingRoom room = rooms[currentRoom];
@@ -258,6 +336,7 @@ namespace JinYanMaoYing
 
         private void OpenQuiz(int index)
         {
+            PlayEffectSound(interactionClip, 0.78f);
             quizIndex = index;
             observing = index < 3;
             quiz.SetActive(true);

@@ -32,6 +32,8 @@ namespace JinYanMaoYing
             for (int i = 0; i < tiles.Length; i++)
             {
                 int index = i;
+                if (tiles[i].GetComponent<UIButtonClickSound>() == null)
+                    tiles[i].gameObject.AddComponent<UIButtonClickSound>();
                 tiles[i].onClick.AddListener(() => Rotate(index));
                 angles[i] = Random.Range(0, 4);
                 tiles[i].GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 0f, angles[i] * 90f);
