@@ -63,7 +63,8 @@ public static class RebuildScenes
         if (font == null) throw new Exception("缺少 STXINGKA 字体");
         foreach (string path in new[] {
             "Assets/Art/BaoHeDian/Entrance/保和殿前庭彩色.png",
-            "Assets/Art/BaoHeDian/Entrance/营造匠人立绘.png"
+            "Assets/Art/BaoHeDian/Entrance/营造匠人立绘.png",
+            "Assets/Art/BaoHeDian/Entrance/营造匠人对话半身像.png"
         })
         {
             TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
@@ -1061,7 +1062,7 @@ public static class RebuildScenes
         ColorPanel(dialog.transform, "立绘分隔线", new Vector2(2f, 275f),
             new Vector2(-465f, 0f), new Color(0.74f, 0.57f, 0.37f, 0.72f));
         game.dialoguePortrait = Picture(dialog.transform, "匠人近景立绘",
-            art + "营造匠人立绘.png", new Vector2(365f, 445f),
+            art + "营造匠人对话半身像.png", new Vector2(365f, 445f),
             new Vector2(-690f, 50f));
         ColorPanel(dialog.transform, "姓名牌", new Vector2(455f, 66f),
             new Vector2(-210f, 119f), new Color(0.36f, 0.15f, 0.12f, 0.96f));
@@ -1141,7 +1142,7 @@ public static class RebuildScenes
         referenceArt.uvRect = new Rect(0.21875f, 0f, 0.5625f, 1f);
         referenceArt.raycastTarget = false;
         ColorPanel(canvas.transform, "顶部底色", new Vector2(1920f, 122f), new Vector2(0f, 478f), new Color(0.07f, 0.07f, 0.07f, 0.69f));
-        Label(canvas.transform, "关卡名", "保和殿 · 营造图复原", 49, new Vector2(700f, 92f), new Vector2(-485f, 478f), Color.white);
+        Label(canvas.transform, "关卡名", "保和殿 · 营造图复原", 49, new Vector2(700f, 92f), new Vector2(-285f, 478f), Color.white);
         game.timerText = Label(canvas.transform, "倒计时", "剩余时间 07:00", 44, new Vector2(460f, 90f), new Vector2(380f, 478f), Color.white);
         Label(canvas.transform, "玩法说明", "墨宝要找回阶陛与屋檐的线索。对照原图，点击拼块旋转九十度。", 29,
             new Vector2(1510f, 58f), new Vector2(0f, -486f), new Color(0.18f, 0.12f, 0.12f));

@@ -38,7 +38,7 @@ namespace JinYanMaoYing
         {
             FindLabel();
             if (background == null || background.sprite != null || background.color.a < 0.2f) return;
-            if (readableFont == null) readableFont = Font.CreateDynamicFontFromOSFont("Microsoft YaHei", 36);
+            if (readableFont == null) readableFont = Font.CreateDynamicFontFromOSFont("KaiTi", 36);
             if (label != null)
             {
                 label.font = readableFont;
@@ -53,10 +53,13 @@ namespace JinYanMaoYing
                 RectTransform parent = transform as RectTransform;
                 if (parent != null)
                 {
-                    box.anchorMin = box.anchorMax = new Vector2(0.5f, 0.5f);
+                    box.anchorMin = Vector2.zero;
+                    box.anchorMax = Vector2.one;
+                    box.pivot = new Vector2(0.5f, 0.5f);
+                    box.offsetMin = new Vector2(14f, 7f);
+                    box.offsetMax = new Vector2(-14f, -7f);
                     box.anchoredPosition = Vector2.zero;
-                    box.sizeDelta = new Vector2(Mathf.Max(90f, parent.rect.width - 34f),
-                        Mathf.Max(38f, parent.rect.height - 14f));
+                    box.localScale = Vector3.one;
                 }
                 homeText = label.color;
             }

@@ -44,6 +44,7 @@ namespace JinYanMaoYing
                 tiles[0].GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 0f, 90f);
             }
             RefreshTimer();
+            AdjustPuzzleHeader();
             CreateSubmitControl();
         }
 
@@ -71,6 +72,16 @@ namespace JinYanMaoYing
             for (int i = 0; i < angles.Length; i++) if (angles[i] != 0) wrong++;
             if (checkFeedback != null)
                 checkFeedback.text = "还有 " + wrong + " 块方向不对。对照右侧原图，继续转动后再提交。";
+        }
+
+        private void AdjustPuzzleHeader()
+        {
+            Canvas canvas = timerText != null ? timerText.GetComponentInParent<Canvas>() : null;
+            if (canvas == null) return;
+            Transform title = canvas.transform.Find("关卡名");
+            RectTransform titleRect = title as RectTransform;
+            if (titleRect != null)
+                titleRect.anchoredPosition = new Vector2(-285f, titleRect.anchoredPosition.y);
         }
 
         private void CreateSubmitControl()

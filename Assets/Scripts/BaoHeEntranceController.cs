@@ -102,13 +102,12 @@ namespace JinYanMaoYing
                 else
                 {
                     idleClock += Time.deltaTime;
-                    if (idleClock > 0.15f && idleFrame != null) catImage.sprite = idleFrame;
+                    if (idleClock > 2.0f && idleFrame != null) catImage.sprite = idleFrame;
                 }
             }
 
             bool closeToNpc = nextX >= 300f;
-            if (approachHint != null)
-                approachHint.text = closeToNpc ? "按 E 与营造匠人交谈" : "按 A / D 或 ← / → 移动，走近匠人";
+            SetApproachHint(closeToNpc ? "按 E 与营造匠人交谈" : "按 A / D 或 ← / → 移动，走近匠人");
             if (closeToNpc && !conversationDone)
             {
                 BeginDialogue();
@@ -123,8 +122,19 @@ namespace JinYanMaoYing
             conversing = true;
             lineIndex = 0;
             if (dialoguePanel != null) dialoguePanel.SetActive(true);
-            if (approachHint != null) approachHint.text = "";
+            SetApproachHint("");
             ShowLine();
+        }
+
+        private void SetApproachHint(string message)
+        {
+            if (approachHint != null)
+            {
+                approachHint.text = message;
+                Transform backing = approachHint.transform.parent != null
+                    ? approachHint.transform.parent.Find("操作提示底色") : null;
+                if (backing != null) backing.gameObject.SetActive(!string.IsNullOrEmpty(message));
+            }
         }
 
         public void AdvanceDialogue()

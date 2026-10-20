@@ -470,10 +470,10 @@ namespace JinYanMaoYing
             scrollRect.anchorMin = scrollRect.anchorMax = new Vector2(0.5f, 0.5f);
             scrollRect.sizeDelta = new Vector2(1320f, 600f);
             UnityEngine.UI.Image scrollImage = scroll.GetComponent<UnityEngine.UI.Image>();
-            UnityEngine.UI.Image missionImage = missionPrompt != null ? missionPrompt.GetComponent<UnityEngine.UI.Image>() : null;
-            scrollImage.sprite = missionImage != null ? missionImage.sprite : null;
-            scrollImage.color = scrollImage.sprite != null ? Color.white : new Color(0.96f, 0.9f, 0.77f, 0.98f);
-            scrollImage.preserveAspect = scrollImage.sprite != null;
+            // Keep this contextual lesson independent from the opening mission art, which has text baked into its sprite.
+            scrollImage.sprite = null;
+            scrollImage.color = new Color(0.96f, 0.9f, 0.77f, 0.98f);
+            scrollImage.preserveAspect = false;
             scrollImage.raycastTarget = false;
 
             GameObject paper = new GameObject("教学文字底纸", typeof(RectTransform),
@@ -543,6 +543,12 @@ namespace JinYanMaoYing
 
         private void ShowItemTutorial(SpawnedItem item)
         {
+            // The opening mission card and a contextual control lesson should never compete.
+            if (missionPrompt != null)
+            {
+                missionPrompt.gameObject.SetActive(false);
+                missionPrompt.anchoredPosition = new Vector2(-2200f, 0f);
+            }
             tutorialItem = item;
             if (item.kind == 1)
             {
