@@ -3151,7 +3151,7 @@ MonoBehaviour:
   videoOverlay: {fileID: 519506031}
   videoScreen: {fileID: 1085747730}
   introPlayer: {fileID: 984099631}
-  introClip: {fileID: 32900000, guid: 398f96d88bc103e4680f2140200b956f, type: 3}
+  introClip: {fileID: 32900000, guid: 6d6a7f18b2184bd0a191b3c4d5e6f701, type: 3}
   coinSprite: {fileID: 21300000, guid: 36614d772d1128049b0488714f156730, type: 3}
   beastSprites:
   - {fileID: 21300000, guid: e318b24e0b4e87249b53833fba59552b, type: 3}

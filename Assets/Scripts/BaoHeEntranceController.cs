@@ -43,6 +43,9 @@ namespace JinYanMaoYing
         private float idleClock;
         private Material revealMaterial;
         private Coroutine typewriter;
+        private AudioSource meowSource;
+        private AudioClip questionMeowClip;
+        private AudioClip replyMeowClip;
         private bool typing;
 
         private void Start()
@@ -56,6 +59,14 @@ namespace JinYanMaoYing
             if (approachHint != null) approachHint.font = Font.CreateDynamicFontFromOSFont("SimSun", 30);
             if (continueHint != null) continueHint.font = keyFont;
             if (dialogueText != null) dialogueText.rectTransform.anchoredPosition = new Vector2(135f, -28f);
+            questionMeowClip = Resources.Load<AudioClip>("Audio/Cat_Meow");
+            replyMeowClip = Resources.Load<AudioClip>("Audio/Cat_Meow_Reply");
+            if (questionMeowClip != null || replyMeowClip != null)
+            {
+                meowSource = gameObject.AddComponent<AudioSource>();
+                meowSource.playOnAwake = false;
+                meowSource.spatialBlend = 0f;
+            }
             if (cat != null) cat.anchoredPosition = new Vector2(-720f, -315f);
             if (catImage != null && idleFrame != null) catImage.sprite = idleFrame;
             // The color layer stays present so the brush shader can reveal it. The
@@ -174,6 +185,10 @@ namespace JinYanMaoYing
             if (dialoguePortrait != null)
                 dialoguePortrait.color = catSpeaking
                     ? new Color(0.58f, 0.58f, 0.58f, 0.82f) : Color.white;
+            AudioClip lineMeowClip = lineIndex == 1 ? questionMeowClip :
+                lineIndex == 3 ? replyMeowClip : null;
+            if (catSpeaking && meowSource != null && lineMeowClip != null)
+                meowSource.PlayOneShot(lineMeowClip, 0.72f);
             if (typewriter != null) StopCoroutine(typewriter);
             typewriter = StartCoroutine(TypeLine(lines[lineIndex]));
         }

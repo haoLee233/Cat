@@ -40,8 +40,8 @@ public static class WindowsBuild
         if (nav == null) throw new Exception("封面导航器缺失");
         LevelIntroVideo intro = nav.GetComponent<LevelIntroVideo>();
         if (intro == null) intro = nav.gameObject.AddComponent<LevelIntroVideo>();
-        intro.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_one_video.m4v");
-        if (intro.clip == null) throw new Exception("缺少午门片头 Scene_one_video.m4v");
+        intro.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/游戏开场cg.m4v");
+        if (intro.clip == null) throw new Exception("缺少游戏开场片头 游戏开场cg.m4v");
         intro.playOnStart = false;
         if (intro.onFinished == null) intro.onFinished = new UnityEngine.Events.UnityEvent();
         nav.openingIntro = intro;
