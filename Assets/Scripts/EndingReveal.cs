@@ -22,7 +22,7 @@ namespace JinYanMaoYing
 
         private void Start()
         {
-            AudioClip endingMusic = Resources.Load<AudioClip>("Audio/Scene_Ending_BGM");
+            AudioClip endingMusic = Resources.Load<AudioClip>("Audio/游戏完成后的背景音乐");
             if (endingMusic != null)
             {
                 endingMusicSource = gameObject.AddComponent<AudioSource>();
@@ -32,7 +32,7 @@ namespace JinYanMaoYing
                 endingMusicSource.spatialBlend = 0f;
                 endingMusicSource.volume = EndingMusicVolume;
             }
-            else Debug.LogWarning("片尾配乐未找到: Audio/Scene_Ending_BGM");
+            else Debug.LogWarning("片尾配乐未找到: Audio/游戏完成后的背景音乐");
 
             if (monochromeMap == null || story == null) return;
             monochromeMap.alpha = 1f;

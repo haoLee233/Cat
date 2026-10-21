@@ -57,6 +57,8 @@ namespace JinYanMaoYing
         private int jumpsUsed, coins, beasts, spawnCount, runFrameIndex;
         private int health = 3;
         private AudioSource runAudioSource;
+        private AudioSource runMusicSource;
+        private bool runMusicStarted, runMusicPaused = true;
         private AudioSource pickupAudioSource;
         private AudioClip coinPickupClip, stonePickupClip, damageClip, jumpClip, landingClip;
         private bool finished, paused, introPlaying = true;
@@ -110,6 +112,17 @@ namespace JinYanMaoYing
                 runAudioSource.pitch = 1f;
                 runAudioSource.volume = 0.65f;
             }
+            AudioClip runMusicClip = Resources.Load<AudioClip>("Audio/第一关跑酷");
+            if (runMusicClip != null)
+            {
+                runMusicSource = gameObject.AddComponent<AudioSource>();
+                runMusicSource.clip = runMusicClip;
+                runMusicSource.loop = true;
+                runMusicSource.playOnAwake = false;
+                runMusicSource.spatialBlend = 0f;
+                runMusicSource.volume = 0.42f;
+            }
+            else Debug.LogWarning("午门跑酷配乐未找到: Audio/第一关跑酷");
             if (cat != null) catRestRotation = cat.localRotation;
             if (resultPanel != null) resultPanel.SetActive(false);
             if (rankImage != null) rankImage.gameObject.SetActive(false);
@@ -290,6 +303,7 @@ namespace JinYanMaoYing
 
         private void Update()
         {
+            SetRunMusic(!finished && !paused && !introPlaying && tutorialItem == null);
             if (finished || paused || introPlaying)
             {
                 SetRunAudio(false);
@@ -399,6 +413,30 @@ namespace JinYanMaoYing
             else if (runAudioSource.isPlaying)
             {
                 runAudioSource.Stop();
+            }
+        }
+
+        private void SetRunMusic(bool shouldPlay)
+        {
+            if (runMusicSource == null) return;
+            if (shouldPlay)
+            {
+                if (!runMusicStarted)
+                {
+                    runMusicSource.Play();
+                    runMusicStarted = true;
+                    runMusicPaused = false;
+                }
+                else if (runMusicPaused)
+                {
+                    runMusicSource.UnPause();
+                    runMusicPaused = false;
+                }
+            }
+            else if (runMusicStarted && !runMusicPaused)
+            {
+                runMusicSource.Pause();
+                runMusicPaused = true;
             }
         }
 
@@ -804,6 +842,7 @@ namespace JinYanMaoYing
             if (finished) return;
             finished = true;
             SetRunAudio(false);
+            SetRunMusic(false);
             if (win) GameNavigator.WuMenCleared = true;
             ShowResultPanel(win);
         }
@@ -881,6 +920,7 @@ namespace JinYanMaoYing
             if (introPlaying || finished || paused) return;
             paused = true;
             SetRunAudio(false);
+            SetRunMusic(false);
             if (settingsPanel != null) settingsPanel.SetActive(true);
         }
 

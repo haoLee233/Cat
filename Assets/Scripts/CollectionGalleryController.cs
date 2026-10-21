@@ -17,6 +17,7 @@ namespace JinYanMaoYing
         public CanvasGroup detailGroup;
         public Texture[] detailPhotos;
 
+        private AudioSource galleryMusicSource;
         private readonly string[] titles = { "龙形脊兽", "凤形脊兽", "瑞兽脊兽", "铜鹤", "嘉量", "日晷" };
         private readonly string[] descriptions = {
             "龙形脊兽：留意水墨造型中盘曲的身姿。屋脊走兽由匠人塑形、烧制、安装，既装点檐角，也寄托守护宫殿的心愿。",
@@ -30,6 +31,19 @@ namespace JinYanMaoYing
 
         private void Start()
         {
+            AudioClip galleryMusic = Resources.Load<AudioClip>("Audio/GaoShanLiuShui_Game_BGM");
+            if (galleryMusic != null)
+            {
+                galleryMusicSource = gameObject.AddComponent<AudioSource>();
+                galleryMusicSource.clip = galleryMusic;
+                galleryMusicSource.loop = true;
+                galleryMusicSource.playOnAwake = false;
+                galleryMusicSource.spatialBlend = 0f;
+                galleryMusicSource.volume = 0.34f;
+                galleryMusicSource.Play();
+            }
+            else Debug.LogWarning("图鉴背景音乐未找到: Audio/GaoShanLiuShui_Game_BGM");
+
             if (details != null) details.SetActive(false);
             Font readable = Font.CreateDynamicFontFromOSFont("Microsoft YaHei", 30);
             if (detailTitle != null)

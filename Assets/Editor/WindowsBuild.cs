@@ -140,6 +140,11 @@ public static class WindowsBuild
             throw new Exception("午门关卡缺少必需的玩法或图片引用");
         foreach (Sprite beast in runner.beastSprites) if (beast == null) throw new Exception("脊兽图片引用丢失");
         foreach (Sprite frame in runner.runFrames) if (frame == null) throw new Exception("黑猫跑动帧丢失");
+        if (Resources.Load<AudioClip>("Audio/第一关跑酷") == null ||
+            Resources.Load<AudioClip>("Audio/游戏通关前的背景音乐") == null ||
+            Resources.Load<AudioClip>("Audio/游戏完成后的背景音乐") == null ||
+            Resources.Load<AudioClip>("Audio/GaoShanLiuShui_Game_BGM") == null)
+            throw new Exception("背景音乐配置不完整");
 
         EditorSceneManager.OpenScene(scenes[3], OpenSceneMode.Single);
         QianQingExplorer explorer = UnityEngine.Object.FindObjectOfType<QianQingExplorer>();
