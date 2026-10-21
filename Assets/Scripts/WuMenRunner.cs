@@ -67,6 +67,11 @@ namespace JinYanMaoYing
         private GameObject tutorialOverlay;
         private Text tutorialTitle, tutorialBody, tutorialAction;
         private Image tutorialPreview;
+        private Material grayscaleBackgroundMaterial;
+        private Material[][] colorChaseMaterials;
+        private readonly float[] colorChaseProgress = new float[3];
+        private readonly bool[] colorChaseStarted = new bool[3];
+        private bool finalColorRun;
 
         private sealed class SpawnedItem
         {
@@ -111,6 +116,7 @@ namespace JinYanMaoYing
             if (scoreText != null) scoreText.gameObject.SetActive(false);
             if (settingsPanel != null) settingsPanel.SetActive(false);
             if (missionPrompt != null) missionPrompt.gameObject.SetActive(false);
+            InitializeColorChase();
             CreateObstacleTutorial();
             nextSpawn = 1.15f;
             if (hudFrame != null && hudFrame.sprite != null)
@@ -321,7 +327,7 @@ namespace JinYanMaoYing
             cat.anchoredPosition = new Vector2(catX, GroundY + jumpHeight);
             SetRunAudio(jumpHeight <= 0.01f && verticalSpeed <= 0f && !ducking);
 
-            if (elapsed >= nextSpawn)
+            if (!finalColorRun && elapsed >= nextSpawn)
             {
                 SpawnNext();
                 nextSpawn = elapsed + Random.Range(0.96f, 1.26f);
@@ -359,6 +365,7 @@ namespace JinYanMaoYing
                     else if (item.kind == 1 && item.beastIndex == beasts)
                     {
                         beasts++;
+                        BeginColorChase(beasts - 1);
                         PlayEffectSound(stonePickupClip, 0.92f);
                         forwardImpulse = Mathf.Min(400f, forwardImpulse + 110f);
                     }
@@ -371,7 +378,7 @@ namespace JinYanMaoYing
                     Destroy(item.rect.gameObject);
                     items.RemoveAt(i);
                     RefreshStatus();
-                    if (beasts >= 3) { Finish(true); break; }
+                    if (beasts >= 3) { BeginFinalColorRun(); break; }
                     if (health <= 0) { Finish(false); break; }
                 }
                 else if (item.rect.anchoredPosition.x < -1100f)
@@ -410,6 +417,99 @@ namespace JinYanMaoYing
                 Vector2 pos = background.anchoredPosition + Vector2.left * Mathf.Min(370f, 265f + elapsed * 2.4f) * dt;
                 if (pos.x <= -1920f) pos.x += 3840f;
                 background.anchoredPosition = pos;
+            }
+            UpdateColorChase();
+        }
+
+        private void InitializeColorChase()
+        {
+            if (backgrounds == null || backgrounds.Length == 0) return;
+            Shader grey = Shader.Find("JinYan/UI Greyscale");
+            Shader brush = Shader.Find("JinYan/UI Brush Reveal");
+            if (grey == null || brush == null)
+            {
+                Debug.LogError("午门复色 Shader 缺失，无法呈现失色与追色效果。");
+                return;
+            }
+            grayscaleBackgroundMaterial = new Material(grey);
+            colorChaseMaterials = new Material[3][];
+            for (int stage = 0; stage < 3; stage++) colorChaseMaterials[stage] = new Material[backgrounds.Length];
+            for (int i = 0; i < backgrounds.Length; i++)
+            {
+                RectTransform background = backgrounds[i];
+                if (background == null) continue;
+                UnityEngine.UI.Image baseImage = background.GetComponent<UnityEngine.UI.Image>();
+                if (baseImage == null || baseImage.sprite == null) continue;
+                Sprite colorSprite = baseImage.sprite;
+                baseImage.material = grayscaleBackgroundMaterial;
+                for (int stage = 0; stage < 3; stage++)
+                {
+                    GameObject layer = new GameObject("追色笔触" + (stage + 1), typeof(RectTransform),
+                        typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+                    layer.transform.SetParent(background, false);
+                    RectTransform layerRect = layer.GetComponent<RectTransform>();
+                    layerRect.anchorMin = Vector2.zero;
+                    layerRect.anchorMax = Vector2.one;
+                    layerRect.offsetMin = Vector2.zero;
+                    layerRect.offsetMax = Vector2.zero;
+                    UnityEngine.UI.Image image = layer.GetComponent<UnityEngine.UI.Image>();
+                    image.sprite = colorSprite;
+                    image.color = baseImage.color;
+                    image.preserveAspect = false;
+                    image.raycastTarget = false;
+                    Material material = new Material(brush);
+                    material.SetFloat("_Reveal", -0.12f);
+                    material.SetFloat("_ColorStrength", stage == 0 ? 0.68f : stage == 1 ? 0.84f : 1f);
+                    image.material = material;
+                    colorChaseMaterials[stage][i] = material;
+                }
+            }
+        }
+
+        private void BeginColorChase(int stage)
+        {
+            if (colorChaseMaterials == null || stage < 0 || stage >= colorChaseProgress.Length) return;
+            colorChaseStarted[stage] = true;
+            colorChaseProgress[stage] = 0f;
+            StartCoroutine(AnimateColorChase(stage));
+        }
+
+        private IEnumerator AnimateColorChase(int stage)
+        {
+            const float duration = 2.8f;
+            float time = 0f;
+            while (time < duration)
+            {
+                time += Time.unscaledDeltaTime;
+                colorChaseProgress[stage] = Mathf.Clamp01(time / duration);
+                UpdateColorChase();
+                yield return null;
+            }
+            colorChaseProgress[stage] = 1f;
+            UpdateColorChase();
+        }
+
+        private void UpdateColorChase()
+        {
+            if (colorChaseMaterials == null || backgrounds == null) return;
+            for (int stage = 0; stage < colorChaseProgress.Length; stage++)
+            {
+                if (!colorChaseStarted[stage]) continue;
+                float progress = Mathf.SmoothStep(0f, 1f, colorChaseProgress[stage]);
+                // Three permanent thirds of the screen: the finish is never tied to the cat.
+                float targetEdge = stage == 0 ? -320f : stage == 1 ? 320f : 1080f;
+                float screenEdge = Mathf.Lerp(-1040f, targetEdge, progress);
+                for (int i = 0; i < backgrounds.Length; i++)
+                {
+                    RectTransform background = backgrounds[i];
+                    Material material = colorChaseMaterials[stage][i];
+                    if (background == null || material == null) continue;
+                    float width = background.rect.width;
+                    if (width <= 0f) continue;
+                    float leftEdge = background.anchoredPosition.x - width * background.pivot.x;
+                    float textureEdge = (screenEdge - leftEdge) / width;
+                    material.SetFloat("_Reveal", Mathf.Clamp(textureEdge, -0.12f, 1.12f));
+                }
             }
         }
 
@@ -681,11 +781,35 @@ namespace JinYanMaoYing
             if (hintText != null) hintText.text = "按空格跳过石狮 · 按住↓钻过宫灯 · 跳起触碰发光脊兽";
         }
 
+        private void BeginFinalColorRun()
+        {
+            if (finalColorRun) return;
+            finalColorRun = true;
+            // Let MoBao keep running while the final third paints across the screen.
+            foreach (SpawnedItem item in items)
+                if (item != null && item.rect != null) Destroy(item.rect.gameObject);
+            items.Clear();
+            if (hintText != null) hintText.text = "三只脊兽归位，继续奔跑，等待色彩铺满午门。";
+            StartCoroutine(CompleteAfterColorRun());
+        }
+
+        private IEnumerator CompleteAfterColorRun()
+        {
+            yield return new WaitForSecondsRealtime(3.65f);
+            Finish(true);
+        }
+
         private void Finish(bool win)
         {
+            if (finished) return;
             finished = true;
             SetRunAudio(false);
             if (win) GameNavigator.WuMenCleared = true;
+            ShowResultPanel(win);
+        }
+
+        private void ShowResultPanel(bool win)
+        {
             if (resultPanel != null) resultPanel.SetActive(true);
             if (resultText != null) resultText.text = win ? "午门已通关\n脊兽已归位" : "旅途暂歇\n再试一次吧";
             StartCoroutine(ShowResult(win));
@@ -782,6 +906,11 @@ namespace JinYanMaoYing
             if (videoTexture != null) { videoTexture.Release(); Destroy(videoTexture); }
             if (slicedHudSprite != null) Destroy(slicedHudSprite);
             if (tutorialOverlay != null) Destroy(tutorialOverlay);
+            if (grayscaleBackgroundMaterial != null) Destroy(grayscaleBackgroundMaterial);
+            if (colorChaseMaterials != null)
+                foreach (Material[] layers in colorChaseMaterials)
+                    foreach (Material material in layers)
+                        if (material != null) Destroy(material);
         }
     }
 }

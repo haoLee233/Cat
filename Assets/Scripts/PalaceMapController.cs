@@ -63,6 +63,7 @@ namespace JinYanMaoYing
             if (missionText != null)
             {
                 missionText.text = missions[progress];
+                missionText.font = Font.CreateDynamicFontFromOSFont("SimSun", 38);
                 missionText.fontSize = Mathf.Max(missionText.fontSize, 38);
                 Outline outline = missionText.GetComponent<Outline>();
                 if (outline == null) outline = missionText.gameObject.AddComponent<Outline>();

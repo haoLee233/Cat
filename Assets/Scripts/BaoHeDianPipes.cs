@@ -18,6 +18,8 @@ namespace JinYanMaoYing
         private readonly int[] angles = new int[25];
         private float remaining;
         private bool ended;
+        private GameObject submitButtonObject;
+        private GameObject feedbackPanelObject;
 
         private void Start()
         {
@@ -46,6 +48,7 @@ namespace JinYanMaoYing
             RefreshTimer();
             AdjustPuzzleHeader();
             CreateSubmitControl();
+            EnsureInstructionPanel();
         }
 
         private void Update()
@@ -100,6 +103,7 @@ namespace JinYanMaoYing
             Button button = buttonObject.GetComponent<Button>();
             button.onClick.AddListener(Submit);
             buttonObject.AddComponent<InkHoverButton>();
+            submitButtonObject = buttonObject;
             GameObject title = new GameObject("按钮文字", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
             title.transform.SetParent(buttonObject.transform, false);
             RectTransform titleRect = title.GetComponent<RectTransform>();
@@ -110,14 +114,23 @@ namespace JinYanMaoYing
             label.alignment = TextAnchor.MiddleCenter; label.color = new Color(1f, 0.94f, 0.81f);
             label.raycastTarget = false;
 
-            GameObject feedbackObject = new GameObject("拼图检查反馈", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            GameObject feedbackObject = new GameObject("拼图检查反馈底框", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             feedbackObject.transform.SetParent(canvas.transform, false);
+            feedbackPanelObject = feedbackObject;
             RectTransform feedbackRect = feedbackObject.GetComponent<RectTransform>();
             feedbackRect.anchorMin = feedbackRect.anchorMax = new Vector2(0.5f, 0.5f);
-            feedbackRect.anchoredPosition = new Vector2(535f, -417f);
-            feedbackRect.sizeDelta = new Vector2(780f, 44f);
-            checkFeedback = feedbackObject.GetComponent<Text>();
-            checkFeedback.font = readable; checkFeedback.fontSize = 26;
+            feedbackRect.anchoredPosition = new Vector2(535f, -423f);
+            feedbackRect.sizeDelta = new Vector2(785f, 48f);
+            Image feedbackPaper = feedbackObject.GetComponent<Image>();
+            feedbackPaper.color = new Color(0.97f, 0.92f, 0.81f, 0.95f);
+            feedbackPaper.raycastTarget = false;
+            GameObject feedbackLabel = new GameObject("拼图检查反馈文字", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            feedbackLabel.transform.SetParent(feedbackObject.transform, false);
+            RectTransform labelRect = feedbackLabel.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero; labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(12f, 4f); labelRect.offsetMax = new Vector2(-12f, -4f);
+            checkFeedback = feedbackLabel.GetComponent<Text>();
+            checkFeedback.font = Font.CreateDynamicFontFromOSFont("SimSun", 26); checkFeedback.fontSize = 26;
             checkFeedback.text = "全部拼好后，点击上方按钮检查。";
             checkFeedback.alignment = TextAnchor.MiddleCenter;
             checkFeedback.color = new Color(0.18f, 0.11f, 0.09f);
@@ -127,6 +140,28 @@ namespace JinYanMaoYing
                 buttonObject.transform.SetSiblingIndex(resultPanel.transform.GetSiblingIndex());
                 feedbackObject.transform.SetSiblingIndex(resultPanel.transform.GetSiblingIndex());
             }
+        }
+
+        private void EnsureInstructionPanel()
+        {
+            Canvas canvas = timerText != null ? timerText.GetComponentInParent<Canvas>() : null;
+            if (canvas == null) return;
+            Transform instruction = canvas.transform.Find("玩法说明");
+            if (instruction == null) return;
+            Text instructionText = instruction.GetComponent<Text>();
+            if (instructionText != null) instructionText.font = Font.CreateDynamicFontFromOSFont("SimSun", 29);
+            if (canvas.transform.Find("玩法说明底色") != null) return;
+            GameObject paper = new GameObject("玩法说明底色", typeof(RectTransform),
+                typeof(CanvasRenderer), typeof(Image));
+            paper.transform.SetParent(canvas.transform, false);
+            RectTransform rect = paper.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, -486f);
+            rect.sizeDelta = new Vector2(1540f, 64f);
+            Image image = paper.GetComponent<Image>();
+            image.color = new Color(0.97f, 0.92f, 0.81f, 0.94f);
+            image.raycastTarget = false;
+            paper.transform.SetSiblingIndex(instruction.GetSiblingIndex());
         }
 
         private bool AllCorrect()
@@ -145,6 +180,12 @@ namespace JinYanMaoYing
         private void End(bool won)
         {
             ended = true;
+            if (submitButtonObject != null) submitButtonObject.SetActive(false);
+            if (feedbackPanelObject != null) feedbackPanelObject.SetActive(false);
+            Transform instruction = timerText != null ? timerText.GetComponentInParent<Canvas>()?.transform.Find("玩法说明") : null;
+            if (instruction != null) instruction.gameObject.SetActive(false);
+            Transform instructionPaper = timerText != null ? timerText.GetComponentInParent<Canvas>()?.transform.Find("玩法说明底色") : null;
+            if (instructionPaper != null) instructionPaper.gameObject.SetActive(false);
             if (won) GameNavigator.BaoHeDianCleared = true;
             if (retryButton != null) retryButton.SetActive(!won);
             foreach (Button tile in tiles) if (tile != null) tile.interactable = false;

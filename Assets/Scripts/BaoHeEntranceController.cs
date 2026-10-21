@@ -52,6 +52,10 @@ namespace JinYanMaoYing
             PlayerPrefs.DeleteKey("BaoHeReturnForRecolor");
 
             if (dialoguePanel != null) dialoguePanel.SetActive(false);
+            Font keyFont = Font.CreateDynamicFontFromOSFont("Microsoft YaHei", 30);
+            if (approachHint != null) approachHint.font = Font.CreateDynamicFontFromOSFont("SimSun", 30);
+            if (continueHint != null) continueHint.font = keyFont;
+            if (dialogueText != null) dialogueText.rectTransform.anchoredPosition = new Vector2(135f, -28f);
             if (cat != null) cat.anchoredPosition = new Vector2(-720f, -315f);
             if (catImage != null && idleFrame != null) catImage.sprite = idleFrame;
             // The color layer stays present so the brush shader can reveal it. The
@@ -192,7 +196,7 @@ namespace JinYanMaoYing
         private IEnumerator RestoreColorAndOpenKnowledge()
         {
             restoring = true;
-            if (approachHint != null) approachHint.text = "";
+            SetApproachHint("");
             if (sceneMessage != null) sceneMessage.text = "营造图归位，跟随墨宝，看色彩重回殿宇……";
             if (cat != null) cat.anchoredPosition = new Vector2(-850f, -315f);
             yield return new WaitForSecondsRealtime(0.6f);

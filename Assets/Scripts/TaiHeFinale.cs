@@ -82,6 +82,10 @@ namespace JinYanMaoYing
                 materials[i].SetFloat("_RevealRadius",0f);
             }
             Build(canvas.transform);
+            Font keyFont = Font.CreateDynamicFontFromOSFont("Microsoft YaHei", 30);
+            if (hint != null) hint.font = keyFont;
+            if (objective != null) objective.font = keyFont;
+            if (assemblyHint != null) assemblyHint.font = keyFont;
             Enter(0,true);
             Tell("A/D 移动 · 空格二段跳 · 梯口 ↑/↓ 攀爬 · 靠近构件按 E",8f);
         }
