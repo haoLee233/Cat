@@ -303,7 +303,7 @@ namespace JinYanMaoYing
 
         private void Update()
         {
-            SetRunMusic(!finished && !paused && !introPlaying && tutorialItem == null);
+            SetRunMusic(!finished && !paused && !introPlaying);
             if (finished || paused || introPlaying)
             {
                 SetRunAudio(false);

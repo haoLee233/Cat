@@ -40,7 +40,6 @@ namespace JinYanMaoYing
         private bool conversationDone;
         private bool restoring;
         private float animationClock;
-        private float idleClock;
         private Material revealMaterial;
         private Coroutine typewriter;
         private AudioSource meowSource;
@@ -50,6 +49,8 @@ namespace JinYanMaoYing
 
         private void Start()
         {
+            Sprite suppliedIdleSprite = Resources.Load<Sprite>("MoBao/墨宝静止");
+            if (suppliedIdleSprite != null) idleFrame = suppliedIdleSprite;
             bool returning = PendingRecolor;
             PendingRecolor = false;
             PlayerPrefs.DeleteKey("BaoHeReturnForRecolor");
@@ -108,7 +109,6 @@ namespace JinYanMaoYing
             {
                 if (Mathf.Abs(horizontal) > 0.1f)
                 {
-                    idleClock = 0f;
                     animationClock += Time.deltaTime * 11f;
                     if (runFrames != null && runFrames.Length > 0)
                         catImage.sprite = runFrames[(int)animationClock % runFrames.Length];
@@ -116,8 +116,7 @@ namespace JinYanMaoYing
                 }
                 else
                 {
-                    idleClock += Time.deltaTime;
-                    if (idleClock > 2.0f && idleFrame != null) catImage.sprite = idleFrame;
+                    if (idleFrame != null) catImage.sprite = idleFrame;
                 }
             }
 

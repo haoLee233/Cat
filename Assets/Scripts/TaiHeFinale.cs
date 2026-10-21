@@ -26,6 +26,7 @@ namespace JinYanMaoYing
         private readonly int[] requiredTurns = { 1, 3, 2 };
         private readonly bool[] taken = new bool[3], solved = new bool[3];
         private readonly Texture2D[] scenes = new Texture2D[3], runs = new Texture2D[3];
+        private Texture2D idleCat;
         private readonly Material[] materials = new Material[3];
         private Texture2D items;
         private RectTransform root, cat;
@@ -71,6 +72,8 @@ namespace JinYanMaoYing
                 scenes[i]=Resources.Load<Texture2D>("TaiHeFinale/"+sceneFiles[i]);
                 runs[i]=Resources.Load<Texture2D>("TaiHeFinale/猫跑"+(i+1));
             }
+            Sprite idleSprite=Resources.Load<Sprite>("MoBao/墨宝静止");
+            idleCat=idleSprite!=null?idleSprite.texture:null;
             items=Resources.Load<Texture2D>("TaiHeFinale/复色构件");
             Shader shader=Resources.Load<Shader>("TaiHeReveal");
             if (shader == null || items == null || scenes[0] == null || scenes[1] == null || scenes[2] == null)
@@ -137,7 +140,7 @@ namespace JinYanMaoYing
             collectible=Raw(root,"带色构件",Vector2.zero,new Vector2(175,155),items);
             collectible.raycastTarget=false;
             collectible.gameObject.AddComponent<CollectibleGlow>();
-            catArt=Raw(root,"墨宝",Vector2.zero,new Vector2(164,88),runs[0]);
+            catArt=Raw(root,"墨宝",Vector2.zero,new Vector2(80,80),idleCat!=null?idleCat:runs[0]);
             catArt.raycastTarget=false;
             cat=catArt.rectTransform;
             catRestRotation=cat.localRotation;
@@ -246,12 +249,17 @@ namespace JinYanMaoYing
             else {
                 cat.localRotation=catRestRotation;
                 if(movingOnGround&&runs[0]!=null) {
+                    cat.sizeDelta=new Vector2(164,88);
                     runFrameAccumulator+=dt;
                     while(runFrameAccumulator>=RunFrameDuration) {
                         runFrameAccumulator-=RunFrameDuration;
                         runFrameIndex=(runFrameIndex+1)%runs.Length;
                     }
                     catArt.texture=runs[runFrameIndex];
+                }
+                else if(!movingOnGround&&idleCat!=null) {
+                    cat.sizeDelta=new Vector2(80,80);
+                    catArt.texture=idleCat;
                 }
             }
             SetRunAudio(movingOnGround);

@@ -60,7 +60,6 @@ namespace JinYanMaoYing
         private float verticalSpeed;
         private float hintUntil;
         private float runFrameAccumulator;
-        private float idleTime;
         private float lastDirectionTapTime = -10f;
         private int lastTapDirection;
         private int runFrameIndex;
@@ -85,6 +84,8 @@ namespace JinYanMaoYing
 
         private void Start()
         {
+            Sprite suppliedIdleSprite = Resources.Load<Sprite>("MoBao/墨宝静止");
+            if (suppliedIdleSprite != null) idleSprite = suppliedIdleSprite;
             if (ending != null) ending.SetActive(false);
             if (quiz != null) quiz.SetActive(false);
             CreateRelicPreview();
@@ -124,6 +125,7 @@ namespace JinYanMaoYing
             if (catImage != null)
             {
                 catImage.preserveAspect = true;
+                if (idleSprite != null) catImage.sprite = idleSprite;
                 catRestRotation = cat.localRotation;
             }
             AudioClip runClip = Resources.Load<AudioClip>("Audio/Cat_Run");
@@ -326,7 +328,6 @@ namespace JinYanMaoYing
                     cat.localRotation = catRestRotation;
                     if (movingOnGround && runFrames != null && runFrames.Length > 0)
                     {
-                        idleTime = 0f;
                         runFrameAccumulator += dt;
                         while (runFrameAccumulator >= RunFrameDuration)
                         {
@@ -335,10 +336,9 @@ namespace JinYanMaoYing
                         }
                         catImage.sprite = runFrames[runFrameIndex];
                     }
-                    else if (Mathf.Abs(input) < 0.1f)
+                    else
                     {
-                        idleTime += dt;
-                        if (idleTime > 3.5f && idleSprite != null)
+                        if (idleSprite != null)
                         {
                             catImage.sprite = idleSprite;
                             float breath = 1f + Mathf.Sin(Time.unscaledTime * 2.3f) * 0.018f;

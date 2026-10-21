@@ -25,6 +25,7 @@ namespace JinYanMaoYing
         {
             remaining = timeLimit;
             if (resultPanel != null) resultPanel.SetActive(false);
+            AddIdleCatDisplay();
             if (tiles == null || tiles.Length != 25)
             {
                 Debug.LogError("保和殿必须配置 25 块营造图拼块");
@@ -49,6 +50,23 @@ namespace JinYanMaoYing
             AdjustPuzzleHeader();
             CreateSubmitControl();
             EnsureInstructionPanel();
+        }
+
+        private void AddIdleCatDisplay()
+        {
+            Canvas canvas = timerText != null ? timerText.GetComponentInParent<Canvas>() : null;
+            Sprite idleSprite = Resources.Load<Sprite>("MoBao/墨宝静止");
+            if (canvas == null || idleSprite == null) return;
+            GameObject catObject = new GameObject("墨宝静止", typeof(RectTransform), typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+            catObject.transform.SetParent(canvas.transform, false);
+            RectTransform rect = catObject.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(850f, -170f);
+            rect.sizeDelta = new Vector2(180f, 230f);
+            UnityEngine.UI.Image idleCat = catObject.GetComponent<UnityEngine.UI.Image>();
+            idleCat.sprite = idleSprite;
+            idleCat.preserveAspect = true;
+            idleCat.raycastTarget = false;
         }
 
         private void Update()
