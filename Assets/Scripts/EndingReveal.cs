@@ -17,6 +17,7 @@ namespace JinYanMaoYing
         private const float EndingMusicVolume = 0.30f;
         private RenderTexture videoTexture;
         private GameObject videoOverlay;
+        private Text playbackErrorText;
         private bool videoFinished;
 
         private void Start()
@@ -41,7 +42,7 @@ namespace JinYanMaoYing
             story.blocksRaycasts = false;
             if (endingClip == null)
             {
-                Debug.LogError("结局视频 Scene_end_video.m4v 未配置");
+                Debug.LogError("结局视频 游戏结尾cg.m4v 未配置");
                 StartCoroutine(PlayReveal());
                 return;
             }
@@ -63,6 +64,21 @@ namespace JinYanMaoYing
             black.color = Color.black;
             black.raycastTarget = true;
             videoOverlay = overlay;
+
+            GameObject errorObject = new GameObject("片尾播放提示", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            errorObject.transform.SetParent(overlay.transform, false);
+            RectTransform errorRect = errorObject.GetComponent<RectTransform>();
+            errorRect.anchorMin = errorRect.anchorMax = new Vector2(0.5f, 0.5f);
+            errorRect.sizeDelta = new Vector2(1000f, 140f);
+            errorRect.anchoredPosition = Vector2.zero;
+            playbackErrorText = errorObject.GetComponent<Text>();
+            playbackErrorText.font = buttonFont != null ? buttonFont : Font.CreateDynamicFontFromOSFont("Microsoft YaHei", 34);
+            playbackErrorText.fontSize = 34;
+            playbackErrorText.alignment = TextAnchor.MiddleCenter;
+            playbackErrorText.color = new Color(1f, 0.95f, 0.83f);
+            playbackErrorText.text = "片尾视频暂时无法播放，请检查视频文件或点击右上角跳过";
+            playbackErrorText.raycastTarget = false;
+            errorObject.SetActive(false);
 
             GameObject frame = new GameObject("完整视频安全画框", typeof(RectTransform));
             frame.transform.SetParent(overlay.transform, false);
@@ -124,13 +140,18 @@ namespace JinYanMaoYing
 
         private IEnumerator PreparationTimeout()
         {
-            yield return new WaitForSecondsRealtime(12f);
-            if (!videoFinished && player != null && !player.isPrepared) FinishVideo();
+            yield return new WaitForSecondsRealtime(30f);
+            if (!videoFinished && player != null && !player.isPrepared)
+            {
+                Debug.LogError("结局ED视频准备超时，保留播放界面并提示用户");
+                ShowPlaybackError();
+            }
         }
 
         private void OnPrepared(VideoPlayer source)
         {
             if (videoFinished) return;
+            if (playbackErrorText != null) playbackErrorText.gameObject.SetActive(false);
             source.Play();
             if (endingMusicSource != null)
             {
@@ -158,7 +179,16 @@ namespace JinYanMaoYing
         private void OnError(VideoPlayer source, string message)
         {
             Debug.LogError("结局ED播放失败: " + message);
-            FinishVideo();
+            ShowPlaybackError();
+        }
+
+        private void ShowPlaybackError()
+        {
+            if (playbackErrorText != null)
+            {
+                playbackErrorText.transform.SetAsLastSibling();
+                playbackErrorText.gameObject.SetActive(true);
+            }
         }
 
         public void FinishVideo()

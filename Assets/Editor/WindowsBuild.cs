@@ -13,7 +13,7 @@ public static class WindowsBuild
 {
     public static void ImproveEndingVideoClarity()
     {
-        const string path = "Assets/Videos/Scene_end_video.m4v";
+        const string path = "Assets/Videos/游戏结尾cg.m4v";
         VideoClipImporter importer = AssetImporter.GetAtPath(path) as VideoClipImporter;
         if (importer == null) throw new Exception("结局视频导入器缺失: " + path);
         VideoImporterTargetSettings settings = importer.GetTargetSettings("Standalone");

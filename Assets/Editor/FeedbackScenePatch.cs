@@ -119,7 +119,7 @@ public static class FeedbackScenePatch
     public static void ApplyLevelIntros()
     {
         PatchLevelIntro("Assets/Scenes/保和殿水管.unity", "Assets/Videos/第三.m4v", true);
-        PatchLevelIntro("Assets/Scenes/太和殿.unity", "Assets/Videos/第四CG.m4v", false);
+        PatchLevelIntro("Assets/Scenes/太和殿.unity", "Assets/Videos/太和殿cg.m4v", false);
         PatchEnding();
         AssetDatabase.SaveAssets();
         Debug.Log("LEVEL_INTROS_AND_ENDING_READY");
@@ -214,8 +214,8 @@ public static class FeedbackScenePatch
         Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/终章.unity", OpenSceneMode.Single);
         EndingReveal reveal = UnityEngine.Object.FindObjectOfType<EndingReveal>();
         if (reveal == null) throw new Exception("终章播放控制器缺失");
-        VideoClip clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_end_video.m4v");
-        if (clip == null) throw new Exception("结局ED视频 Scene_end_video.m4v 缺失");
+        VideoClip clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/游戏结尾cg.m4v");
+        if (clip == null) throw new Exception("结局ED视频 游戏结尾cg.m4v 缺失");
         reveal.endingClip = clip;
         EditorSceneManager.SaveScene(scene);
     }

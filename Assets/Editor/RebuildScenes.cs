@@ -1089,8 +1089,8 @@ public static class RebuildScenes
         dialog.gameObject.SetActive(false);
 
         LevelIntroVideo cg = game.gameObject.AddComponent<LevelIntroVideo>();
-        cg.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/第三.m4v");
-        if (cg.clip == null) throw new Exception("缺少保和殿片头 CG 第三.m4v");
+        cg.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/保和殿cg.m4v");
+        if (cg.clip == null) throw new Exception("缺少保和殿片头 CG 保和殿cg.m4v");
         cg.buttonFont = font;
         cg.playOnStart = false;
         cg.skipLabel = "跳过片头";
@@ -1173,7 +1173,7 @@ public static class RebuildScenes
             new Vector2(900f, 100f), new Vector2(0f, 448f), new Color(0.20f, 0.13f, 0.11f));
         TaiHeFinale game = new GameObject("太和殿终章控制", typeof(TaiHeFinale)).GetComponent<TaiHeFinale>();
         game.introVideo = game.gameObject.AddComponent<LevelIntroVideo>();
-        game.introVideo.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/第四CG.m4v");
+        game.introVideo.clip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/太和殿cg.m4v");
         game.introVideo.cutsceneAmbience = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Resources/Audio/TaiHe_CG_Ambience.wav");
         game.introVideo.buttonFont = font;
         if (game.introVideo.clip == null) throw new Exception("缺少太和殿第四段CG");
@@ -1254,7 +1254,7 @@ public static class RebuildScenes
         EndingReveal reveal = new GameObject("终章画卷复色", typeof(EndingReveal)).GetComponent<EndingReveal>();
         reveal.monochromeMap = monochrome.gameObject.AddComponent<CanvasGroup>();
         reveal.story = story.gameObject.AddComponent<CanvasGroup>();
-        reveal.endingClip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/Scene_end_video.m4v");
+        reveal.endingClip = AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Videos/游戏结尾cg.m4v");
         if (reveal.endingClip == null) throw new Exception("缺少结局ED视频");
         return Save(scene, GameNavigator.Ending);
     }
