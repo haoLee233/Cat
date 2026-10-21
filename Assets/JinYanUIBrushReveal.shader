@@ -5,6 +5,7 @@ Shader "JinYan/UI Brush Reveal"
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
         _Reveal ("Brush Progress", Range(-0.12,1.12)) = -0.12
+        _ColorStrength ("Color Strength", Range(0,1)) = 1
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -51,6 +52,7 @@ Shader "JinYan/UI Brush Reveal"
             sampler2D _MainTex;
             fixed4 _Color;
             float _Reveal;
+            float _ColorStrength;
 
             v2f vert(appdata input)
             {
@@ -69,6 +71,8 @@ Shader "JinYan/UI Brush Reveal"
                 float edge = 0.018 * sin(y * 73.0 + sin(y * 31.0) * 2.0)
                            + 0.006 * sin(y * 211.0);
                 float distanceToBrush = _Reveal - input.uv.x - y * 0.035 + edge;
+                float luminance = dot(color.rgb, float3(0.299, 0.587, 0.114));
+                color.rgb = lerp(luminance.xxx, color.rgb, _ColorStrength);
                 color.a *= smoothstep(-0.028, 0.028, distanceToBrush);
                 return color;
             }

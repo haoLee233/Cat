@@ -76,6 +76,8 @@ namespace JinYanMaoYing
         private Quaternion catRestRotation;
         private RenderTexture videoTexture;
         private RawImage relicPreview;
+        private Material greyscaleRoomMaterial;
+        private Material[] roomColorMaterials;
         private RectTransform relicPreviewFrame;
         private const float Floor = -353f;
         private const float HalfCat = 47f;
@@ -86,9 +88,17 @@ namespace JinYanMaoYing
             if (ending != null) ending.SetActive(false);
             if (quiz != null) quiz.SetActive(false);
             CreateRelicPreview();
+            InitializeRoomColors();
+            if (status != null)
+            {
+                status.font = Font.CreateDynamicFontFromOSFont("Microsoft YaHei", 28);
+                status.fontSize = 24;
+                status.rectTransform.sizeDelta = new Vector2(500f, 40f);
+                status.rectTransform.anchoredPosition = new Vector2(-600f, 287f);
+            }
             if (hint != null)
             {
-                hint.font = Font.CreateDynamicFontFromOSFont("Microsoft YaHei", 32);
+                hint.font = Font.CreateDynamicFontFromOSFont("SimSun", 32);
                 hint.fontSize = 30;
                 hint.horizontalOverflow = HorizontalWrapMode.Wrap;
                 hint.verticalOverflow = VerticalWrapMode.Truncate;
@@ -250,6 +260,9 @@ namespace JinYanMaoYing
                 videoTexture.Release();
                 Destroy(videoTexture);
             }
+            if (greyscaleRoomMaterial != null) Destroy(greyscaleRoomMaterial);
+            if (roomColorMaterials != null)
+                foreach (Material material in roomColorMaterials) if (material != null) Destroy(material);
         }
 
         private void Update()
@@ -339,7 +352,12 @@ namespace JinYanMaoYing
             if (Input.GetKeyDown(KeyCode.E)) TryInspect();
             if (x > 943f)
             {
-                if (currentRoom < rooms.Length - 1) StartCoroutine(ChangeRoom(currentRoom + 1, true));
+                if (currentRoom == 2 && !AllFound())
+                {
+                    cat.anchoredPosition = new Vector2(920f, y);
+                    SetHint("先查阅前庭、丹陛和月台的三件器物，再进入正殿。", 3f);
+                }
+                else if (currentRoom < rooms.Length - 1) StartCoroutine(ChangeRoom(currentRoom + 1, true));
                 else if (AllFound()) OpenQuiz(3);
                 else { cat.anchoredPosition = new Vector2(920f, y); SetHint("还有器物尚未查阅，沿左侧返回寻找。", 3f); }
             }
@@ -394,7 +412,7 @@ namespace JinYanMaoYing
         {
             quizTitle.text = quizIndex == 3 ? "工匠识物 · 通关考验" : "查阅「" + relicNames[quizIndex] + "」";
             quizQuestion.text = observing ? observations[quizIndex] : questions[quizIndex];
-            quizFeedback.text = observing ? "先观察场景与器物，再进入辨识。" : "选出正确答案，方可收入图鉴。";
+            quizFeedback.text = observing ? "" : "选出正确答案，方可收入图鉴。";
             bool showRelic = observing && quizIndex < 3 && relicPreviewFrame != null;
             if (relicPreviewFrame != null) relicPreviewFrame.gameObject.SetActive(showRelic);
             if (showRelic) ShowRelicPreview(quizIndex);
@@ -471,11 +489,72 @@ namespace JinYanMaoYing
             quizIndex = -1;
             observing = false;
             quiz.SetActive(false);
-            if (solved == 3) { Finish(); return; }
+            if (solved == 3)
+            {
+                StartCoroutine(RestoreRoomColor(3, true));
+                return;
+            }
             found[solved] = true;
             rooms[solved].relic.gameObject.SetActive(false);
             UpdateStatus();
-            SetHint("已查阅「" + relicNames[solved] + "」！继续探索。", 4f);
+            SetHint("答对了！「" + relicNames[solved] + "」所在区域正在复色。", 4f);
+            StartCoroutine(RestoreRoomColor(solved, false));
+        }
+
+        private void InitializeRoomColors()
+        {
+            Shader grey = Shader.Find("JinYan/UI Greyscale");
+            Shader brush = Shader.Find("JinYan/UI Brush Reveal");
+            if (grey == null || brush == null || rooms == null)
+            {
+                Debug.LogError("乾清宫复色 Shader 或场景缺失。");
+                return;
+            }
+            greyscaleRoomMaterial = new Material(grey);
+            roomColorMaterials = new Material[rooms.Length];
+            for (int i = 0; i < rooms.Length; i++)
+            {
+                if (rooms[i] == null) continue;
+                Transform background = rooms[i].transform.Find("场景水墨画");
+                Image baseImage = background != null ? background.GetComponent<Image>() : null;
+                if (baseImage == null || baseImage.sprite == null) continue;
+                GameObject overlay = new GameObject("场景复色笔触", typeof(RectTransform),
+                    typeof(CanvasRenderer), typeof(Image));
+                overlay.transform.SetParent(background, false);
+                RectTransform rect = overlay.GetComponent<RectTransform>();
+                rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
+                rect.offsetMin = rect.offsetMax = Vector2.zero;
+                Image color = overlay.GetComponent<Image>();
+                color.sprite = baseImage.sprite;
+                color.color = baseImage.color;
+                color.preserveAspect = baseImage.preserveAspect;
+                color.raycastTarget = false;
+                Material material = new Material(brush);
+                material.SetFloat("_Reveal", -0.12f);
+                roomColorMaterials[i] = material;
+                color.material = material;
+                baseImage.material = greyscaleRoomMaterial;
+            }
+        }
+
+        private IEnumerator RestoreRoomColor(int roomIndex, bool finishAfter)
+        {
+            changing = true;
+            Material material = roomColorMaterials != null && roomIndex < roomColorMaterials.Length
+                ? roomColorMaterials[roomIndex] : null;
+            const float duration = 2.5f;
+            if (material != null)
+            {
+                for (float time = 0f; time < duration; time += Time.unscaledDeltaTime)
+                {
+                    material.SetFloat("_Reveal", Mathf.Lerp(-0.12f, 1.12f,
+                        Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(time / duration))));
+                    yield return null;
+                }
+                material.SetFloat("_Reveal", 1.12f);
+            }
+            changing = false;
+            if (finishAfter) Finish();
         }
 
         public void CloseQuiz()

@@ -160,9 +160,9 @@ public static class RebuildScenes
         if (explorer.status != null)
         {
             RectTransform statusRect = explorer.status.rectTransform;
-            statusRect.anchoredPosition = new Vector2(-600f, 226f);
-            statusRect.sizeDelta = new Vector2(540f, 42f);
-            explorer.status.fontSize = 28;
+            statusRect.anchoredPosition = new Vector2(-600f, 287f);
+            statusRect.sizeDelta = new Vector2(500f, 40f);
+            explorer.status.fontSize = 24;
             explorer.status.alignment = TextAnchor.MiddleCenter;
         }
         EditorSceneManager.SaveScene(scene);
@@ -902,8 +902,8 @@ public static class RebuildScenes
             new Vector2(192f, 465f), new Color(0.13f, 0.10f, 0.09f, 0.76f));
         game.roomTitle = Label(canvas.transform, "当前场景名", "乾清宫前庭", 49,
             new Vector2(590f, 76f), new Vector2(192f, 471f), new Color(1f, 0.94f, 0.83f));
-        game.status = Label(canvas.transform, "图鉴进度", "已查阅器物 0/3", 35,
-            new Vector2(480f, 65f), new Vector2(615f, 390f), new Color(0.22f, 0.14f, 0.10f));
+        game.status = Label(canvas.transform, "图鉴进度", "已查阅器物 0/3", 24,
+            new Vector2(500f, 40f), new Vector2(-600f, 287f), new Color(0.22f, 0.14f, 0.10f));
         ColorPanel(canvas.transform, "底部提示底色", new Vector2(1300f, 80f),
             new Vector2(0f, -475f), new Color(0.96f, 0.89f, 0.74f, 0.84f));
         game.hint = Label(canvas.transform, "玩法提示", "", 33, new Vector2(1240f, 70f),
@@ -1076,7 +1076,7 @@ public static class RebuildScenes
         role.alignment = TextAnchor.MiddleLeft;
         game.speakerRoleText = role;
         game.dialogueText = Label(dialog.transform, "对话正文", "", 43,
-            new Vector2(1210f, 166f), new Vector2(135f, 6f),
+            new Vector2(1210f, 166f), new Vector2(135f, -28f),
             new Color(1f, 0.96f, 0.87f));
         game.dialogueText.alignment = TextAnchor.UpperLeft;
         game.continueHint = Label(dialog.transform, "继续提示", "", 27,
@@ -1144,6 +1144,8 @@ public static class RebuildScenes
         ColorPanel(canvas.transform, "顶部底色", new Vector2(1920f, 122f), new Vector2(0f, 478f), new Color(0.07f, 0.07f, 0.07f, 0.69f));
         Label(canvas.transform, "关卡名", "保和殿 · 营造图复原", 49, new Vector2(700f, 92f), new Vector2(-285f, 478f), Color.white);
         game.timerText = Label(canvas.transform, "倒计时", "剩余时间 07:00", 44, new Vector2(460f, 90f), new Vector2(380f, 478f), Color.white);
+        ColorPanel(canvas.transform, "玩法说明底色", new Vector2(1540f, 64f),
+            new Vector2(0f, -486f), new Color(0.97f, 0.92f, 0.81f, 0.92f));
         Label(canvas.transform, "玩法说明", "墨宝要找回阶陛与屋檐的线索。对照原图，点击拼块旋转九十度。", 29,
             new Vector2(1510f, 58f), new Vector2(0f, -486f), new Color(0.18f, 0.12f, 0.12f));
         Button back = ActionButton(canvas.transform, "返回地图", "返回地图", new Vector2(250f, 76f), new Vector2(-820f, 478f));
